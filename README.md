@@ -107,7 +107,7 @@ pnpm -r build
 
 - **Run frontend:**  
   `pnpm --filter web run dev`  
-  (Set `VITE_API_BASE_URL` to your API Gateway URL.)
+  Copy `packages/web/.env.example` to `packages/web/.env.local` and set `VITE_COGNITO_USER_POOL_ID` and `VITE_COGNITO_CLIENT_ID` (same values as integration tests) so the Amplify login/signup/forgot-password flow works. Set `VITE_API_BASE_URL` when the API is deployed.
 
 - **Prototype only (no backend):**  
   `cd prototype-app && pnpm install && pnpm dev`  

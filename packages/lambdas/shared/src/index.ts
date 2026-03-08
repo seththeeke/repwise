@@ -1,5 +1,6 @@
-/**
- * @repwise/shared — types, DDB client, and utilities for Repwise Lambdas.
- * Enums, models, ddb, response, auth, and goalUtils will be added per specs/backend-spec.md Phase 2.
- */
-export {};
+export * from './enums';
+export * from './models';
+export * from './ddb';
+export * from './response';
+export * from './auth';
+export * from './goalUtils';

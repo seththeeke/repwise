@@ -12,7 +12,7 @@ export class AuthConstruct extends Construct {
     this.userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: 'repwise-user-pool',
       selfSignUpEnabled: true,
-      signInAliases: { email: true, username: true },
+      signInAliases: { email: true },
       autoVerify: { email: true },
       passwordPolicy: {
         minLength: 8,
