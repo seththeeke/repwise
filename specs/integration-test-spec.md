@@ -1,4 +1,4 @@
-# Fitness App — Integration Test Spec
+# Repwise — Integration Test Spec
 > Vitest-based integration tests against the deployed backend. Pair with BACKEND_SPEC.md for full context on each endpoint being tested.
 
 ---
@@ -28,7 +28,7 @@ pnpm add amazon-cognito-identity-js
 **`packages/integration-tests/package.json`**
 ```json
 {
-  "name": "@fitness/integration-tests",
+  "name": "@repwise/integration-tests",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
@@ -64,9 +64,9 @@ export default defineConfig({
 API_BASE_URL=https://api.yourapp.com/v1
 COGNITO_USER_POOL_ID=us-east-1_XXXXXXXX
 COGNITO_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXX
-TEST_USER_EMAIL=testuser@fitness-app-test.com
+TEST_USER_EMAIL=testuser@repwise-test.com
 TEST_USER_PASSWORD=TestPass123!
-TEST_USER_2_EMAIL=testuser2@fitness-app-test.com
+TEST_USER_2_EMAIL=testuser2@repwise-test.com
 TEST_USER_2_PASSWORD=TestPass123!
 ```
 
@@ -79,29 +79,29 @@ packages/integration-tests/.env.test
 
 ## CDK: Provision Test Users
 
-Add to `packages/cdk/lib/fitness-stack.ts`. Test users are created once at deploy time and never torn down.
+Add to `packages/cdk/lib/repwise-stack.ts`. Test users are created once at deploy time and never torn down.
 
 ```typescript
 // Only create test users in non-production environments
 if (this.node.tryGetContext('env') !== 'prod') {
   new cognito.CfnUserPoolUser(this, 'TestUser1', {
     userPoolId: auth.userPool.userPoolId,
-    username: 'testuser@fitness-app-test.com',
+    username: 'testuser@repwise-test.com',
     temporaryPassword: process.env.TEST_USER_PASSWORD,
     messageAction: 'SUPPRESS',  // Don't send welcome email
     userAttributes: [
-      { name: 'email', value: 'testuser@fitness-app-test.com' },
+      { name: 'email', value: 'testuser@repwise-test.com' },
       { name: 'email_verified', value: 'true' },
     ],
   });
 
   new cognito.CfnUserPoolUser(this, 'TestUser2', {
     userPoolId: auth.userPool.userPoolId,
-    username: 'testuser2@fitness-app-test.com',
+    username: 'testuser2@repwise-test.com',
     temporaryPassword: process.env.TEST_USER_PASSWORD,
     messageAction: 'SUPPRESS',
     userAttributes: [
-      { name: 'email', value: 'testuser2@fitness-app-test.com' },
+      { name: 'email', value: 'testuser2@repwise-test.com' },
       { name: 'email_verified', value: 'true' },
     ],
   });
@@ -557,13 +557,13 @@ describe('Social', () => {
 
 ```bash
 # From monorepo root
-pnpm --filter @fitness/integration-tests test
+pnpm --filter @repwise/integration-tests test
 
 # Watch mode during development
-pnpm --filter @fitness/integration-tests test:watch
+pnpm --filter @repwise/integration-tests test:watch
 
 # Run a single file
-pnpm --filter @fitness/integration-tests test 03-workouts
+pnpm --filter @repwise/integration-tests test 03-workouts
 ```
 
 ---

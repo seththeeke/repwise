@@ -123,18 +123,18 @@ The stack does not create test users. After deploying:
 
    ```bash
    aws cognito-idp admin-create-user --user-pool-id <UserPoolId> \
-     --username testuser@fitness-app-test.com \
-     --user-attributes Name=email,Value=testuser@fitness-app-test.com Name=email_verified,Value=true \
+     --username testuser@repwise-test.com \
+     --user-attributes Name=email,Value=testuser@repwise-test.com Name=email_verified,Value=true \
      --temporary-password 'TempPass123!' --message-action SUPPRESS
    aws cognito-idp admin-set-user-password --user-pool-id <UserPoolId> \
-     --username testuser@fitness-app-test.com --password 'TestPass123!' --permanent
+     --username testuser@repwise-test.com --password 'TestPass123!' --permanent
    ```
-   (Use the same for a second user if you need social tests: `testuser2@fitness-app-test.com`.)
+   (Use the same for a second user if you need social tests: `testuser2@repwise-test.com`.)
 
 2. **Copy CDK outputs into** `packages/integration-tests/.env.test`:
    - `COGNITO_USER_POOL_ID` = stack output **UserPoolId**
    - `COGNITO_CLIENT_ID` = stack output **UserPoolClientId**
-   - `TEST_USER_EMAIL=testuser@fitness-app-test.com`
+   - `TEST_USER_EMAIL=testuser@repwise-test.com`
    - `TEST_USER_PASSWORD=TestPass123!`
    - (Optional) `TEST_USER_2_EMAIL`, `TEST_USER_2_PASSWORD` for the second test user.
 

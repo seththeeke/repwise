@@ -1,4 +1,4 @@
-# Fitness App — Monitoring & Observability Spec
+# Repwise — Monitoring & Observability Spec
 > Optimized for execution in Cursor. All monitoring infrastructure lives in `packages/cdk/lib/monitoring.ts` and is instantiated from the main CDK stack. Follow phases in order.
 
 ---
@@ -65,7 +65,7 @@ These metrics are published automatically to CloudWatch by each service. No agen
 
 **Location:** `packages/cdk/lib/monitoring.ts`
 
-This is a single CDK `Construct` class that accepts references to all other resources and wires up all alarms, log groups, and the dashboard. It is instantiated once in `packages/cdk/lib/fitness-stack.ts`.
+This is a single CDK `Construct` class that accepts references to all other resources and wires up all alarms, log groups, and the dashboard. It is instantiated once in `packages/cdk/lib/repwise-stack.ts`.
 
 ### Constructor Interface
 
@@ -125,7 +125,7 @@ export class MonitoringConstruct extends Construct {
 ### Instantiation in Main Stack
 
 ```typescript
-// packages/cdk/lib/fitness-stack.ts (addition to existing stack)
+// packages/cdk/lib/repwise-stack.ts (addition to existing stack)
 
 const monitoring = new MonitoringConstruct(this, 'Monitoring', {
   userLambda: lambdas.user,
@@ -157,8 +157,8 @@ All alarms route to a single SNS topic which emails the developer. One topic, on
 
 // ── Alert Topic ──────────────────────────────────────────────────────────────
 this.alertTopic = new sns.Topic(this, 'AlertTopic', {
-  topicName: 'fitness-app-alerts',
-  displayName: 'Fitness App Alerts',
+  topicName: 'repwise-alerts',
+  displayName: 'Repwise Alerts',
 });
 
 this.alertTopic.addSubscription(
@@ -213,7 +213,7 @@ All alarms use `TreatMissingData.NOT_BREACHING` unless noted — missing data on
 // ── API Gateway: High 5XX Error Rate ─────────────────────────────────────────
 // P1. Server errors affecting users. Threshold: >5 errors in a 5-minute window.
 const api5xxAlarm = new cloudwatch.Alarm(this, 'Api5xxAlarm', {
-  alarmName: 'fitness-api-5xx-errors',
+  alarmName: 'repwise-api-5xx-errors',
   alarmDescription: 'API Gateway is returning 5XX errors. Lambda failures or timeouts.',
   metric: new cloudwatch.Metric({
     namespace: 'AWS/ApiGateway',
@@ -234,7 +234,7 @@ api5xxAlarm.addOkAction(alarmAction); // Notify when it recovers too
 // P2. Elevated client errors may indicate a frontend bug or auth issue.
 // Threshold: >20 errors in a 5-minute window (some 4xx is normal — search 404s etc).
 const api4xxAlarm = new cloudwatch.Alarm(this, 'Api4xxAlarm', {
-  alarmName: 'fitness-api-4xx-elevated',
+  alarmName: 'repwise-api-4xx-elevated',
   alarmDescription: 'Elevated 4XX error rate. Possible auth issue or frontend bug.',
   metric: new cloudwatch.Metric({
     namespace: 'AWS/ApiGateway',
@@ -253,7 +253,7 @@ api4xxAlarm.addAlarmAction(alarmAction);
 // ── API Gateway: High P99 Latency ─────────────────────────────────────────────
 // P2. p99 latency over 5 seconds is a bad user experience.
 const apiLatencyAlarm = new cloudwatch.Alarm(this, 'ApiLatencyAlarm', {
-  alarmName: 'fitness-api-high-latency',
+  alarmName: 'repwise-api-high-latency',
   alarmDescription: 'API p99 latency is above 5 seconds.',
   metric: new cloudwatch.Metric({
     namespace: 'AWS/ApiGateway',
@@ -285,7 +285,7 @@ const criticalLambdas = [
 
 criticalLambdas.forEach(({ fn, name }) => {
   const errorAlarm = new cloudwatch.Alarm(this, `${name}ErrorAlarm`, {
-    alarmName: `fitness-lambda-${name}-errors`,
+    alarmName: `repwise-lambda-${name}-errors`,
     alarmDescription: `${name} Lambda is throwing errors.`,
     metric: fn.metricErrors({
       period: cdk.Duration.minutes(5),
@@ -304,7 +304,7 @@ criticalLambdas.forEach(({ fn, name }) => {
 // P2. Any throttling means users are getting errors. Lambda free tier is 1M
 // invocations/month and 400,000 GB-seconds. Throttles indicate concurrency limits hit.
 const throttleAlarm = new cloudwatch.Alarm(this, 'LambdaThrottleAlarm', {
-  alarmName: 'fitness-lambda-throttles',
+  alarmName: 'repwise-lambda-throttles',
   alarmDescription: 'Lambda functions are being throttled. Concurrency limit may be hit.',
   metric: new cloudwatch.MathExpression({
     expression: 'SUM(METRICS())',
@@ -327,7 +327,7 @@ throttleAlarm.addAlarmAction(alarmAction);
 // P1. If IteratorAge is high, the metrics processor is falling behind the stream.
 // User metrics will be stale. Threshold: 5 minutes old.
 const iteratorAgeAlarm = new cloudwatch.Alarm(this, 'IteratorAgeAlarm', {
-  alarmName: 'fitness-metrics-processor-iterator-age',
+  alarmName: 'repwise-metrics-processor-iterator-age',
   alarmDescription: 'Metrics processor is falling behind the DynamoDB stream. User metrics may be stale.',
   metric: props.metricsProcessorLambda.metricIteratorAge({
     period: cdk.Duration.minutes(5),
@@ -345,7 +345,7 @@ iteratorAgeAlarm.addOkAction(alarmAction);
 // P2. AI Lambda is SSE-based and expected to run longer than others.
 // Alert if it exceeds 20 seconds (approaching the 29s API GW timeout).
 const aiDurationAlarm = new cloudwatch.Alarm(this, 'AiDurationAlarm', {
-  alarmName: 'fitness-ai-lambda-duration',
+  alarmName: 'repwise-ai-lambda-duration',
   alarmDescription: 'AI Lambda p99 duration is approaching the API Gateway 29s timeout.',
   metric: props.aiLambda.metricDuration({
     period: cdk.Duration.minutes(5),
@@ -372,7 +372,7 @@ const tables = [
 
 tables.forEach(({ table, name }) => {
   const systemErrorAlarm = new cloudwatch.Alarm(this, `${name}DdbSystemErrorAlarm`, {
-    alarmName: `fitness-ddb-${name}-system-errors`,
+    alarmName: `repwise-ddb-${name}-system-errors`,
     alarmDescription: `DynamoDB ${name} table has system errors. AWS-side issue.`,
     metric: new cloudwatch.Metric({
       namespace: 'AWS/DynamoDB',
@@ -393,7 +393,7 @@ tables.forEach(({ table, name }) => {
 // P2. On-demand tables rarely throttle but it can happen under a burst.
 // PAY_PER_REQUEST tables have a burst capacity bucket — if exhausted, requests throttle.
 const ddbThrottleAlarm = new cloudwatch.Alarm(this, 'DdbThrottleAlarm', {
-  alarmName: 'fitness-ddb-throttled-requests',
+  alarmName: 'repwise-ddb-throttled-requests',
   alarmDescription: 'DynamoDB is throttling requests. Burst capacity exhausted.',
   metric: new cloudwatch.MathExpression({
     expression: 'SUM(METRICS())',
@@ -427,7 +427,7 @@ ddbThrottleAlarm.addAlarmAction(alarmAction);
 // Users will be in Cognito but have no DynamoDB profile — auth will succeed
 // but every subsequent API call will fail with 404 or permissions errors.
 const postConfirmErrorAlarm = new cloudwatch.Alarm(this, 'PostConfirmErrorAlarm', {
-  alarmName: 'fitness-cognito-post-confirm-errors',
+  alarmName: 'repwise-cognito-post-confirm-errors',
   alarmDescription: 'Cognito post-confirmation Lambda is failing. New user signups are broken.',
   metric: props.cognitoPostConfirmLambda.metricErrors({
     period: cdk.Duration.minutes(5),
@@ -450,7 +450,7 @@ The dashboard has **6 sections** arranged vertically. Each section is a row of r
 
 ```typescript
 this.dashboard = new cloudwatch.Dashboard(this, 'AppDashboard', {
-  dashboardName: 'FitnessApp',
+  dashboardName: 'Repwise',
   defaultInterval: cdk.Duration.hours(3),
 });
 ```
@@ -872,7 +872,7 @@ These queries are saved in CloudWatch Logs Insights so they are one click away i
 // ── Saved Log Insights Queries ────────────────────────────────────────────────
 
 new logs.QueryDefinition(this, 'WorkoutLambdaErrors', {
-  queryDefinitionName: 'Fitness/WorkoutLambda-Errors',
+  queryDefinitionName: 'Repwise/WorkoutLambda-Errors',
   logGroups: [new logs.LogGroup(this, 'WorkoutLogGroupRef', {
     logGroupName: `/aws/lambda/${props.workoutLambda.functionName}`,
   })],
@@ -885,7 +885,7 @@ new logs.QueryDefinition(this, 'WorkoutLambdaErrors', {
 });
 
 new logs.QueryDefinition(this, 'MetricsProcessorErrors', {
-  queryDefinitionName: 'Fitness/MetricsProcessor-Errors',
+  queryDefinitionName: 'Repwise/MetricsProcessor-Errors',
   logGroups: [new logs.LogGroup(this, 'MetricsProcessorLogGroupRef', {
     logGroupName: `/aws/lambda/${props.metricsProcessorLambda.functionName}`,
   })],
@@ -898,7 +898,7 @@ new logs.QueryDefinition(this, 'MetricsProcessorErrors', {
 });
 
 new logs.QueryDefinition(this, 'SlowApiRequests', {
-  queryDefinitionName: 'Fitness/API-SlowRequests',
+  queryDefinitionName: 'Repwise/API-SlowRequests',
   logGroups: [new logs.LogGroup(this, 'ApiLogGroupRef', {
     logGroupName: `/aws/lambda/${props.workoutLambda.functionName}`,
   })],
@@ -911,7 +911,7 @@ new logs.QueryDefinition(this, 'SlowApiRequests', {
 });
 
 new logs.QueryDefinition(this, 'CognitoPostConfirmErrors', {
-  queryDefinitionName: 'Fitness/PostConfirm-Errors',
+  queryDefinitionName: 'Repwise/PostConfirm-Errors',
   logGroups: [new logs.LogGroup(this, 'PostConfirmLogGroupRef', {
     logGroupName: `/aws/lambda/${props.cognitoPostConfirmLambda.functionName}`,
   })],
@@ -984,20 +984,20 @@ export const logger = {
 
 | Alarm Name | Severity | Metric | Threshold | What It Means |
 |---|---|---|---|---|
-| `fitness-api-5xx-errors` | P1 | API GW 5XXError | ≥5 in 5min | Lambda failures — users getting errors |
-| `fitness-api-4xx-elevated` | P2 | API GW 4XXError | ≥20 in 10min | Auth issue or frontend bug |
-| `fitness-api-high-latency` | P2 | API GW Latency p99 | ≥5000ms | Slow response times for users |
-| `fitness-lambda-workout-errors` | P1 | Lambda Errors (workout) | ≥3 in 5min | Workout save/complete failing |
-| `fitness-lambda-metrics-processor-errors` | P1 | Lambda Errors (processor) | ≥3 in 5min | Metrics/goals not updating |
-| `fitness-lambda-ai-errors` | P1 | Lambda Errors (ai) | ≥3 in 5min | AI workout generation failing |
-| `fitness-lambda-throttles` | P2 | Lambda Throttles (combined) | ≥1 in 5min | Concurrency limit hit |
-| `fitness-metrics-processor-iterator-age` | P1 | IteratorAge Maximum | ≥300,000ms | Metrics processor falling behind stream |
-| `fitness-ai-lambda-duration` | P2 | Lambda Duration p99 (ai) | ≥20,000ms | AI approaching API GW timeout |
-| `fitness-ddb-users-system-errors` | P1 | DDB SystemErrors (users) | ≥1 in 5min | DynamoDB internal failure |
-| `fitness-ddb-workouts-system-errors` | P1 | DDB SystemErrors (workouts) | ≥1 in 5min | DynamoDB internal failure |
-| `fitness-ddb-metrics-system-errors` | P1 | DDB SystemErrors (metrics) | ≥1 in 5min | DynamoDB internal failure |
-| `fitness-ddb-throttled-requests` | P2 | DDB ThrottledRequests (all) | ≥5 in 10min | Burst capacity exhausted |
-| `fitness-cognito-post-confirm-errors` | P1 | Lambda Errors (post-confirm) | ≥1 in 5min | New user signup is broken |
+| `repwise-api-5xx-errors` | P1 | API GW 5XXError | ≥5 in 5min | Lambda failures — users getting errors |
+| `repwise-api-4xx-elevated` | P2 | API GW 4XXError | ≥20 in 10min | Auth issue or frontend bug |
+| `repwise-api-high-latency` | P2 | API GW Latency p99 | ≥5000ms | Slow response times for users |
+| `repwise-lambda-workout-errors` | P1 | Lambda Errors (workout) | ≥3 in 5min | Workout save/complete failing |
+| `repwise-lambda-metrics-processor-errors` | P1 | Lambda Errors (processor) | ≥3 in 5min | Metrics/goals not updating |
+| `repwise-lambda-ai-errors` | P1 | Lambda Errors (ai) | ≥3 in 5min | AI workout generation failing |
+| `repwise-lambda-throttles` | P2 | Lambda Throttles (combined) | ≥1 in 5min | Concurrency limit hit |
+| `repwise-metrics-processor-iterator-age` | P1 | IteratorAge Maximum | ≥300,000ms | Metrics processor falling behind stream |
+| `repwise-ai-lambda-duration` | P2 | Lambda Duration p99 (ai) | ≥20,000ms | AI approaching API GW timeout |
+| `repwise-ddb-users-system-errors` | P1 | DDB SystemErrors (users) | ≥1 in 5min | DynamoDB internal failure |
+| `repwise-ddb-workouts-system-errors` | P1 | DDB SystemErrors (workouts) | ≥1 in 5min | DynamoDB internal failure |
+| `repwise-ddb-metrics-system-errors` | P1 | DDB SystemErrors (metrics) | ≥1 in 5min | DynamoDB internal failure |
+| `repwise-ddb-throttled-requests` | P2 | DDB ThrottledRequests (all) | ≥5 in 10min | Burst capacity exhausted |
+| `repwise-cognito-post-confirm-errors` | P1 | Lambda Errors (post-confirm) | ≥1 in 5min | New user signup is broken |
 
 ---
 

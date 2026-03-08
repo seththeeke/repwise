@@ -1,4 +1,4 @@
-# Fitness App — Frontend Spec
+# Repwise — Frontend Spec
 > Optimized for execution in Cursor. Follow phases in order. Do not build everything at once — each phase is self-contained and testable before proceeding.
 
 ---
@@ -69,7 +69,7 @@ export * from '../../../lambdas/shared/src/goalUtils';
 ```json
 {
   "dependencies": {
-    "@fitness/shared": "workspace:../lambdas/shared"
+    "@repwise/shared": "workspace:../lambdas/shared"
   }
 }
 ```

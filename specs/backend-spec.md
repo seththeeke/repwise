@@ -1,4 +1,4 @@
-# Fitness App — Backend & Infrastructure Spec v2
+# Repwise — Backend & Infrastructure Spec v2
 > This document is optimized for execution in Cursor. Follow the steps in order. Each phase builds on the last. Do not skip phases.
 > v2 changes: Added Goals system, lastUsedWeight denormalization on WorkoutExercise, completedDates on GlobalMetrics for calendar widget.
 
@@ -67,7 +67,7 @@
 ## Phase 1 — Project Scaffold
 
 ```bash
-mkdir fitness-app && cd fitness-app
+mkdir repwise && cd repwise
 pnpm init
 pnpm add -D typescript @types/node aws-cdk-lib constructs esbuild
 npx tsc --init
@@ -504,7 +504,7 @@ export class TablesConstruct extends Construct {
 
     // ── Users Table ──────────────────────────────────────────────────────────
     this.usersTable = new dynamodb.Table(this, 'UsersTable', {
-      tableName: 'fitness-users',
+      tableName: 'repwise-users',
       partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -519,7 +519,7 @@ export class TablesConstruct extends Construct {
 
     // ── Workouts Table ───────────────────────────────────────────────────────
     this.workoutsTable = new dynamodb.Table(this, 'WorkoutsTable', {
-      tableName: 'fitness-workouts',
+      tableName: 'repwise-workouts',
       partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -551,7 +551,7 @@ export class TablesConstruct extends Construct {
     // ── Metrics Table ────────────────────────────────────────────────────────
     // Stores ExerciseMetrics, GlobalMetrics, and Goals — all keyed by USER#<userId>
     this.metricsTable = new dynamodb.Table(this, 'MetricsTable', {
-      tableName: 'fitness-metrics',
+      tableName: 'repwise-metrics',
       partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -577,7 +577,7 @@ export class AuthConstruct extends Construct {
     super(scope, id);
 
     this.userPool = new cognito.UserPool(this, 'UserPool', {
-      userPoolName: 'fitness-user-pool',
+      userPoolName: 'repwise-user-pool',
       selfSignUpEnabled: true,
       signInAliases: { email: true, username: true },
       autoVerify: { email: true },
@@ -619,7 +619,7 @@ export class ApiConstruct extends Construct {
     super(scope, id);
 
     this.api = new apigwv2.HttpApi(this, 'HttpApi', {
-      apiName: 'fitness-api',
+      apiName: 'repwise-api',
       corsPreflight: {
         allowHeaders: ['Authorization', 'Content-Type'],
         allowMethods: [apigwv2.CorsHttpMethod.ANY],
@@ -1115,7 +1115,7 @@ import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
 const getApiKey = async (): Promise<string> => {
   const ssm = new SSMClient({});
   const res = await ssm.send(new GetParameterCommand({
-    Name: '/fitness-app/anthropic-api-key',
+    Name: '/repwise/anthropic-api-key',
     WithDecryption: true,
   }));
   return res.Parameter!.Value!;
@@ -1125,7 +1125,7 @@ const getApiKey = async (): Promise<string> => {
 Store key before first deploy:
 ```bash
 aws ssm put-parameter \
-  --name "/fitness-app/anthropic-api-key" \
+  --name "/repwise/anthropic-api-key" \
   --value "sk-ant-..." \
   --type SecureString
 ```
@@ -1247,7 +1247,7 @@ Set all env vars in CDK via `lambda.addEnvironment(...)` — never hardcode.
 
 ## DynamoDB Key Schema Reference
 
-### Users Table (`fitness-users`)
+### Users Table (`repwise-users`)
 
 | Record Type | PK | SK |
 |---|---|---|
@@ -1256,14 +1256,14 @@ Set all env vars in CDK via `lambda.addEnvironment(...)` — never hardcode.
 | Follow relationship (inbound) | `USER#<targetUserId>` | `FOLLOWER#<userId>` |
 | Feed item | `FEED#<userId>` | `<ISO timestamp>#<eventId>` |
 
-### Workouts Table (`fitness-workouts`)
+### Workouts Table (`repwise-workouts`)
 
 | Record Type | PK | SK |
 |---|---|---|
 | Exercise catalog item | `EXERCISE#<exerciseId>` | `METADATA` |
 | Workout instance | `USER#<userId>` | `WORKOUT#<startedAt>#<workoutInstanceId>` |
 
-### Metrics Table (`fitness-metrics`)
+### Metrics Table (`repwise-metrics`)
 
 | Record Type | PK | SK |
 |---|---|---|
