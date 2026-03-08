@@ -48,6 +48,7 @@ The project is a **pnpm monorepo**. Target layout (as specified):
 │   │   ├── ai/                 # AI workout generation (SSE, invoked by workout Lambda)
 │   │   └── cognito-post-confirm/
 │   └── web/                    # React frontend (dashboard, workout builder, execution, goals, feed, profile)
+│   └── integration-tests/      # Vitest integration tests (run against deployed API)
 ├── specs/                      # Implementation specs (follow in order)
 │   ├── backend-spec.md         # Backend & infrastructure
 │   ├── frontend-spec.md        # Web app
@@ -74,6 +75,9 @@ Implementation is specified in the `specs/` directory. Use them in this order:
 
 3. **Monitoring** — [specs/monitoring-spec.md](specs/monitoring-spec.md)  
    CloudWatch dashboard, alarms, log groups, optional SNS email alerts. Designed for free-tier-first and minimal custom metrics.
+
+4. **Integration tests** — [specs/integration-test-spec.md](specs/integration-test-spec.md)  
+   Vitest suite in `packages/integration-tests/` that runs against the deployed API (auth, profile, exercises, workouts, metrics, goals, social). Requires `.env.test` with API URL and Cognito test user credentials.
 
 ---
 

@@ -21,6 +21,9 @@ packages/cdk/.cdk.staging/
 *.pem
 *.key
 
+# Integration tests — never commit credentials
+packages/integration-tests/.env.test
+
 # AWS
 .aws-sam/
 samconfig.toml

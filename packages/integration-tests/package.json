@@ -1,0 +1,19 @@
+{
+  "name": "@repwise/integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "amazon-cognito-identity-js": "^6.3.12",
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "~5.6.0",
+    "vitest": "^2.0.0"
+  }
+}
