@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.cache/
+out/
+*.js.map
+.turbo/
+
+# CDK
+packages/cdk/cdk.out/
+packages/cdk/.cdk.staging/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# AWS
+.aws-sam/
+samconfig.toml
+cdk.context.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite / frontend
+packages/web/dist/
+
+# Deployment outputs
+cdk-outputs.json
