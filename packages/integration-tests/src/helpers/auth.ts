@@ -16,15 +16,23 @@ export const getToken = (email: string, password: string): Promise<string> => {
 
   return new Promise((resolve, reject) => {
     const user = new CognitoUser({ Username: email, Pool: pool });
+    const onSuccess = (session: { getIdToken: () => { getJwtToken: () => string } }) => {
+      const token = session.getIdToken().getJwtToken();
+      tokenCache.set(email, token);
+      resolve(token);
+    };
     user.authenticateUser(
       new AuthenticationDetails({ Username: email, Password: password }),
       {
-        onSuccess: (session) => {
-          const token = session.getIdToken().getJwtToken();
-          tokenCache.set(email, token);
-          resolve(token);
-        },
+        onSuccess,
         onFailure: reject,
+        newPasswordRequired: () => {
+          // User is in FORCE_CHANGE_PASSWORD; complete with the new password only (no attribute updates)
+          user.completeNewPasswordChallenge(password, {}, {
+            onSuccess,
+            onFailure: reject,
+          });
+        },
       }
     );
   });

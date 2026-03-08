@@ -100,7 +100,9 @@ pnpm -r build
 ```
 
 - **Deploy backend:**  
-  `pnpm --filter cdk run cdk deploy --require-approval never`  
+  From repo root: `pnpm --filter cdk run cdk deploy --require-approval never`  
+  Or from `packages/cdk`: `pnpm run cdk deploy --require-approval never`  
+  Use one of these (so the project’s CDK CLI version is used); avoid running a global `cdk` to prevent schema version mismatch.  
   (Anthropic API key in SSM if using Claude; exercise catalog seed as in backend-spec.)
 
 - **Run frontend:**  
@@ -110,6 +112,37 @@ pnpm -r build
 - **Prototype only (no backend):**  
   `cd prototype-app && pnpm install && pnpm dev`  
   Uses mock data for UX iteration.
+
+---
+
+## Auth (Cognito) — manual steps for integration tests
+
+The stack does not create test users. After deploying:
+
+1. **Create a test user** in the User Pool (AWS Console → Cognito → User Pools → your pool → Create user), or via CLI:
+
+   ```bash
+   aws cognito-idp admin-create-user --user-pool-id <UserPoolId> \
+     --username testuser@fitness-app-test.com \
+     --user-attributes Name=email,Value=testuser@fitness-app-test.com Name=email_verified,Value=true \
+     --temporary-password 'TempPass123!' --message-action SUPPRESS
+   aws cognito-idp admin-set-user-password --user-pool-id <UserPoolId> \
+     --username testuser@fitness-app-test.com --password 'TestPass123!' --permanent
+   ```
+   (Use the same for a second user if you need social tests: `testuser2@fitness-app-test.com`.)
+
+2. **Copy CDK outputs into** `packages/integration-tests/.env.test`:
+   - `COGNITO_USER_POOL_ID` = stack output **UserPoolId**
+   - `COGNITO_CLIENT_ID` = stack output **UserPoolClientId**
+   - `TEST_USER_EMAIL=testuser@fitness-app-test.com`
+   - `TEST_USER_PASSWORD=TestPass123!`
+   - (Optional) `TEST_USER_2_EMAIL`, `TEST_USER_2_PASSWORD` for the second test user.
+
+3. **Run the Cognito auth integration test:**
+
+   ```bash
+   pnpm --filter @repwise/integration-tests test -- src/tests/00-cognito-auth.test.ts
+   ```
 
 ---
 
