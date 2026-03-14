@@ -2,9 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { getCurrentUser, signOut as amplifySignOut } from 'aws-amplify/auth';
 import { isCognitoConfigured } from './lib/amplify';
+import { Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { ProfilePage } from './features/profile/ProfilePage';
+import { SettingsPage } from './features/profile/SettingsPage';
+import { GoalsPage } from './features/goals/GoalsPage';
+import { FeedPage } from './features/feed/FeedPage';
 import LoginDialog from './components/LoginDialog';
+import { usersApi } from './api/users';
+import { useAuthStore } from './stores/authStore';
 
 function ConfigRequired() {
   return (
@@ -32,6 +39,7 @@ function App() {
   const [user, setUser] = useState<{ username: string } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const { profile, setProfile, clear: clearAuthStore } = useAuthStore();
 
   const loadUser = useCallback(async () => {
     try {
@@ -39,27 +47,48 @@ function App() {
       setUser({ username: current.username });
     } catch {
       setUser(null);
+      clearAuthStore();
     } finally {
       setAuthChecked(true);
     }
-  }, []);
+  }, [clearAuthStore]);
 
   useEffect(() => {
     loadUser();
   }, [loadUser]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    usersApi
+      .getMe()
+      .then((p) => {
+        if (!cancelled) setProfile(p);
+      })
+      .catch(() => {
+        if (!cancelled) setProfile(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, setProfile]);
 
   const handleLogout = useCallback(async () => {
     try {
       await amplifySignOut();
     } finally {
       setUser(null);
+      clearAuthStore();
     }
-  }, []);
+  }, [clearAuthStore]);
 
   const displayName =
-    user?.username?.includes('@')
+    profile?.displayName?.trim() ||
+    (user?.username?.includes('@')
       ? user.username.split('@')[0]
-      : user?.username ?? 'User';
+      : user?.username) ||
+    'User';
+  const profilePhoto = profile?.profilePhoto ?? undefined;
 
   if (!isCognitoConfigured) {
     return <ConfigRequired />;
@@ -89,16 +118,26 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route
-          path="/"
+          path="/dashboard"
           element={
             <DashboardPage
               displayName={displayName}
-              profilePhoto={undefined}
-              onLogout={handleLogout}
+              profilePhoto={profilePhoto}
             />
           }
         />
+        <Route
+          path="/profile"
+          element={<ProfilePage onLogout={handleLogout} />}
+        />
+        <Route
+          path="/settings"
+          element={<SettingsPage onLogout={handleLogout} />}
+        />
+        <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/feed" element={<FeedPage />} />
       </Routes>
     </BrowserRouter>
   );

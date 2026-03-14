@@ -14,13 +14,11 @@ import { ToastContainer } from '@/components/ui/Toast';
 interface DashboardPageProps {
   displayName: string;
   profilePhoto?: string | null;
-  onLogout: () => void;
 }
 
 export function DashboardPage({
   displayName,
   profilePhoto,
-  onLogout,
 }: DashboardPageProps) {
   const navigate = useNavigate();
   const { data, isLoading, error } = useDashboardData();
@@ -116,16 +114,6 @@ export function DashboardPage({
         />
 
         <ActivityFeedWidget feedItems={feedItems} />
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <button
-          type="button"
-          onClick={onLogout}
-          className="w-full py-3 px-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-medium rounded-xl transition-colors"
-        >
-          Log out
-        </button>
       </div>
     </div>
   );
