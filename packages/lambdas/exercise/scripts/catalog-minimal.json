@@ -1,0 +1,30 @@
+[
+  {
+    "exerciseId": "bench-press",
+    "name": "Bench Press",
+    "muscleGroups": ["chest", "triceps", "shoulders"],
+    "muscleGroup": "chest",
+    "equipment": ["barbell", "bench"],
+    "equipmentPrimary": "barbell",
+    "modality": "sets_reps",
+    "defaultSets": 4,
+    "defaultReps": 8,
+    "difficulty": "intermediate",
+    "instructions": "Lie on bench, grip bar slightly wider than shoulders. Lower to chest, press up.",
+    "isActive": true
+  },
+  {
+    "exerciseId": "squat",
+    "name": "Barbell Squat",
+    "muscleGroups": ["quadriceps", "glutes", "hamstrings"],
+    "muscleGroup": "quadriceps",
+    "equipment": ["barbell", "rack"],
+    "equipmentPrimary": "barbell",
+    "modality": "sets_reps",
+    "defaultSets": 4,
+    "defaultReps": 6,
+    "difficulty": "intermediate",
+    "instructions": "Bar on upper back, squat down until thighs parallel, stand.",
+    "isActive": true
+  }
+]

@@ -1,8 +1,14 @@
 import type { PostConfirmationTriggerEvent } from 'aws-lambda';
 import { TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
-import { ddb, USERS_TABLE, METRICS_TABLE } from '../../shared/src/ddb';
-import type { UserProfile, GlobalMetrics } from '../../shared/src/models';
-import { WeightUnit, PermissionType } from '../../shared/src/enums';
+import {
+  ddb,
+  USERS_TABLE,
+  METRICS_TABLE,
+  type UserProfile,
+  type GlobalMetrics,
+  WeightUnit,
+  PermissionType,
+} from '@repwise/shared';
 
 export const handler = async (
   event: PostConfirmationTriggerEvent
@@ -51,14 +57,14 @@ export const handler = async (
         {
           Put: {
             TableName: USERS_TABLE,
-            Item: profile as Record<string, unknown>,
+            Item: profile as unknown as Record<string, unknown>,
             ConditionExpression: 'attribute_not_exists(PK)',
           },
         },
         {
           Put: {
             TableName: METRICS_TABLE,
-            Item: globalMetrics as Record<string, unknown>,
+            Item: globalMetrics as unknown as Record<string, unknown>,
             ConditionExpression: 'attribute_not_exists(PK)',
           },
         },

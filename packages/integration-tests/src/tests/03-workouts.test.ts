@@ -3,7 +3,7 @@ import { getTestToken } from '../helpers/auth';
 import { makeClient } from '../helpers/client';
 import { TeardownRegistry } from '../helpers/teardown';
 
-describe('Workout Instances', () => {
+describe.skipIf(!process.env.API_BASE_URL)('Workout Instances', () => {
   let client: ReturnType<typeof makeClient>;
   let teardown: TeardownRegistry;
   let workoutId: string;

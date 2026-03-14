@@ -2,7 +2,12 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { getTestToken, getTestToken2 } from '../helpers/auth';
 import { makeClient } from '../helpers/client';
 
-describe('Social', () => {
+// Skip when second test user is not configured (TEST_USER_2_EMAIL, TEST_USER_2_PASSWORD).
+describe.skipIf(
+  !process.env.API_BASE_URL ||
+  !process.env.TEST_USER_2_EMAIL ||
+  !process.env.TEST_USER_2_PASSWORD
+)('Social', () => {
   let client1: ReturnType<typeof makeClient>;
   let client2: ReturnType<typeof makeClient>;
   let user2Id: string;

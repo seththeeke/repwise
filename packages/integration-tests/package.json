@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "pnpm exec vitest run",
+    "test:watch": "pnpm exec vitest"
   },
   "dependencies": {
     "amazon-cognito-identity-js": "^6.3.12",

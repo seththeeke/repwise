@@ -132,11 +132,14 @@ The stack does not create test users. After deploying:
    (Use the same for a second user if you need social tests: `testuser2@repwise-test.com`.)
 
 2. **Copy CDK outputs into** `packages/integration-tests/.env.test`:
+   - `API_BASE_URL` = stack output **ApiUrl** (e.g. `https://xxx.execute-api.us-east-1.amazonaws.com`)
    - `COGNITO_USER_POOL_ID` = stack output **UserPoolId**
    - `COGNITO_CLIENT_ID` = stack output **UserPoolClientId**
    - `TEST_USER_EMAIL=testuser@repwise-test.com`
    - `TEST_USER_PASSWORD=TestPass123!`
    - (Optional) `TEST_USER_2_EMAIL`, `TEST_USER_2_PASSWORD` for the second test user.
+
+   **Exercise catalog:** So that `GET /exercises` returns data, run the seed once after deploy (see backend-spec or `packages/lambdas/scripts/seed-catalog.ts`), with `WORKOUTS_TABLE` set to the stack’s workouts table name.
 
 3. **Run the Cognito auth integration test:**
 

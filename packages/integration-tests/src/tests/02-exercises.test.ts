@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { getTestToken } from '../helpers/auth';
 import { makeClient } from '../helpers/client';
 
-describe('Exercise Catalog', () => {
+describe.skipIf(!process.env.API_BASE_URL)('Exercise Catalog', () => {
   let client: ReturnType<typeof makeClient>;
 
   beforeAll(async () => {
