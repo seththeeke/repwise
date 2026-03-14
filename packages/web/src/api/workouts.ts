@@ -19,6 +19,15 @@ export const workoutsApi = {
   create: (body: { exercises: WorkoutExercise[]; source?: string; permissionType?: string }) =>
     apiClient.post<WorkoutInstance>('/workout-instances', body).then((r) => r.data),
 
+  /** POST with aiPrompt only; returns suggested exercises (no workout created yet). */
+  generateFromPrompt: (aiPrompt: string) =>
+    apiClient
+      .post<{ suggestedExercises: WorkoutExercise[] }>('/workout-instances', {
+        exercises: [],
+        aiPrompt,
+      })
+      .then((r) => r.data),
+
   list: (params?: ListWorkoutsParams) =>
     apiClient
       .get<{ items: WorkoutInstance[]; nextToken?: string }>('/workout-instances', { params })

@@ -33,6 +33,7 @@ export const handler = async (
   const pathParams = event.pathParameters ?? {};
   const exerciseIdParam = pathParams.exerciseId;
   const queryParams = event.queryStringParameters ?? {};
+  console.log('[exercise] request', { method, path, exerciseId: exerciseIdParam, query: Object.keys(queryParams) });
 
   try {
     // GET /exercises
@@ -42,6 +43,7 @@ export const handler = async (
       const modality = queryParams.modality ?? undefined;
       const search = queryParams.search ?? undefined;
       const items = await queryExercises({ muscleGroup, equipment, modality, search });
+      console.log('[exercise] list result', { count: items.length });
       return res.ok(items.map(toResponseItem));
     }
 
@@ -58,8 +60,10 @@ export const handler = async (
       return res.ok(toResponseItem(item));
     }
 
+    console.log('[exercise] no route matched', { method, path });
     return res.badRequest('Not found');
   } catch (err) {
+    console.error('[exercise] handler error', { error: err, message: err instanceof Error ? err.message : String(err) });
     return res.serverError(err);
   }
 };

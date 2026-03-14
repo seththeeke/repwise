@@ -16,6 +16,7 @@ interface WorkoutSessionStore {
   pauseSession: () => void;
   resumeSession: () => void;
   clearSession: () => void;
+  tickElapsed: () => void;
 }
 
 export const useWorkoutSessionStore = create<WorkoutSessionStore>()(
@@ -60,6 +61,9 @@ export const useWorkoutSessionStore = create<WorkoutSessionStore>()(
           elapsedSeconds: 0,
           isPaused: false,
         }),
+
+      tickElapsed: () =>
+        set((state) => ({ elapsedSeconds: state.elapsedSeconds + 1 })),
     }),
     { name: 'workout-session' }
   )

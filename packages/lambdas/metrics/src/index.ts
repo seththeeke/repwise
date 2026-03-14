@@ -87,6 +87,7 @@ export const handler = async (
   const queryParams = event.queryStringParameters ?? {};
   const userId = getUserId(event);
   const pk = `USER#${userId}`;
+  console.log('[metrics] request', { method, path, userId, exerciseId: exerciseIdParam });
 
   try {
     if (method === 'GET' && path === '/metrics/me/global') {
@@ -130,8 +131,10 @@ export const handler = async (
       return res.ok(toExerciseDetail(item, period));
     }
 
+    console.log('[metrics] no route matched', { method, path });
     return res.badRequest('Not found');
   } catch (err) {
+    console.error('[metrics] handler error', { error: err, message: err instanceof Error ? err.message : String(err) });
     return res.serverError(err);
   }
 };

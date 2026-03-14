@@ -28,8 +28,10 @@ export const handler = async (
   const queryParams = event.queryStringParameters ?? {};
   const userId = getUserId(event);
   const pk = `FEED#${userId}`;
+  console.log('[feed] request', { method: event.requestContext.http.method, path, userId });
 
   if (event.requestContext.http.method !== 'GET' || path !== '/feed') {
+    console.log('[feed] no route matched');
     return res.badRequest('Not found');
   }
 
@@ -61,12 +63,14 @@ export const handler = async (
     const nextToken = out.LastEvaluatedKey
       ? Buffer.from(JSON.stringify(out.LastEvaluatedKey)).toString('base64')
       : undefined;
+    console.log('[feed] result', { itemsCount: items.length, hasNextToken: !!nextToken });
 
     return res.ok({
       items: items.map(toFeedItemResponse),
       ...(nextToken ? { nextToken } : {}),
     });
   } catch (err) {
+    console.error('[feed] handler error', { error: err, message: err instanceof Error ? err.message : String(err) });
     return res.serverError(err);
   }
 };

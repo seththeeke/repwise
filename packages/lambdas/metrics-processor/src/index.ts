@@ -91,6 +91,7 @@ function avgWeightInWindow(
 export const handler = async (
   event: DynamoDBStreamEvent
 ): Promise<void> => {
+  console.log('[metrics-processor] invoked', { recordCount: event.Records.length });
   for (const record of event.Records) {
     if (record.eventName !== 'MODIFY') continue;
     const newImage = unmarshall(
@@ -102,7 +103,14 @@ export const handler = async (
     if (newImage.status !== 'completed' || oldImage.status === 'completed')
       continue;
 
-    await processWorkoutCompletion(newImage);
+    console.log('[metrics-processor] processing workout completion', { workoutInstanceId: newImage.workoutInstanceId, userId: newImage.userId });
+    try {
+      await processWorkoutCompletion(newImage);
+      console.log('[metrics-processor] processWorkoutCompletion done', { workoutInstanceId: newImage.workoutInstanceId });
+    } catch (err) {
+      console.error('[metrics-processor] processWorkoutCompletion failed', { workoutInstanceId: newImage.workoutInstanceId, error: err, message: err instanceof Error ? err.message : String(err) });
+      throw err;
+    }
   }
 };
 

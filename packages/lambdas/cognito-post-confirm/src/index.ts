@@ -13,6 +13,7 @@ import {
 export const handler = async (
   event: PostConfirmationTriggerEvent
 ): Promise<PostConfirmationTriggerEvent> => {
+  console.log('[cognito-post-confirm] invoked', { userName: event.userName });
   const userId = event.userName;
   const email = event.request.userAttributes['email'] ?? '';
   const username =
@@ -51,26 +52,32 @@ export const handler = async (
     updatedAt: now,
   };
 
-  await ddb.send(
-    new TransactWriteCommand({
-      TransactItems: [
-        {
-          Put: {
-            TableName: USERS_TABLE,
-            Item: profile as unknown as Record<string, unknown>,
-            ConditionExpression: 'attribute_not_exists(PK)',
+  try {
+    await ddb.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: USERS_TABLE,
+              Item: profile as unknown as Record<string, unknown>,
+              ConditionExpression: 'attribute_not_exists(PK)',
+            },
           },
-        },
-        {
-          Put: {
-            TableName: METRICS_TABLE,
-            Item: globalMetrics as unknown as Record<string, unknown>,
-            ConditionExpression: 'attribute_not_exists(PK)',
+          {
+            Put: {
+              TableName: METRICS_TABLE,
+              Item: globalMetrics as unknown as Record<string, unknown>,
+              ConditionExpression: 'attribute_not_exists(PK)',
+            },
           },
-        },
-      ],
-    })
-  );
+        ],
+      })
+    );
+    console.log('[cognito-post-confirm] profile and global metrics created', { userId, username });
+  } catch (err) {
+    console.error('[cognito-post-confirm] TransactWrite failed', { error: err, message: err instanceof Error ? err.message : String(err) });
+    throw err;
+  }
 
   return event;
 };

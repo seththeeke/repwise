@@ -119,6 +119,7 @@ export const handler = async (
   const idParam = pathParams.id;
   const queryParams = event.queryStringParameters ?? {};
   const userId = getUserId(event);
+  console.log('[workout] request', { method, path, userId, hasBody: !!event.body });
 
   try {
     // POST /workout-instances
@@ -130,8 +131,12 @@ export const handler = async (
         aiPrompt?: string;
       }>(event.body ?? null);
       if (body?.aiPrompt) {
+        console.log('[workout] AI generate path', { userId, aiPromptLength: body.aiPrompt.length });
         const aiLambdaArn = process.env.AI_LAMBDA_ARN;
-        if (!aiLambdaArn) return res.serverError(new Error('AI generation not configured'));
+        if (!aiLambdaArn) {
+          console.error('[workout] AI_LAMBDA_ARN not set');
+          return res.serverError(new Error('AI generation not configured'));
+        }
         const lambda = new LambdaClient({});
         const payload = {
           userId,
@@ -146,6 +151,7 @@ export const handler = async (
         );
         const profile = profileOut.Item as { weightUnit?: string } | undefined;
         if (profile?.weightUnit) payload.weightUnit = profile.weightUnit;
+        console.log('[workout] invoking AI lambda', { aiLambdaArn: aiLambdaArn.slice(-20) });
         const invokeResult = await lambda.send(
           new InvokeCommand({
             FunctionName: aiLambdaArn,
@@ -153,11 +159,18 @@ export const handler = async (
             Payload: JSON.stringify(payload),
           })
         );
-        if (invokeResult.FunctionError)
+        if (invokeResult.FunctionError) {
+          console.error('[workout] AI lambda error', {
+            FunctionError: invokeResult.FunctionError,
+            Payload: invokeResult.Payload ? Buffer.from(invokeResult.Payload).toString().slice(0, 500) : undefined,
+          });
           return res.serverError(new Error(invokeResult.FunctionError));
+        }
         const payloadResult = invokeResult.Payload
           ? JSON.parse(Buffer.from(invokeResult.Payload).toString()) as { exercises: WorkoutExercise[] }
           : { exercises: [] };
+        const count = payloadResult.exercises?.length ?? 0;
+        console.log('[workout] AI lambda success', { suggestedExercisesCount: count });
         return res.ok({ suggestedExercises: payloadResult.exercises ?? [] });
       }
       if (!body?.exercises?.length) return res.badRequest('exercises array required');
@@ -378,8 +391,10 @@ export const handler = async (
       return res.ok(toResponse(updated.Attributes as WorkoutInstance));
     }
 
+    console.log('[workout] no route matched', { method, path });
     return res.badRequest('Not found');
   } catch (err) {
+    console.error('[workout] handler error', { error: err, message: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
     return res.serverError(err);
   }
 };

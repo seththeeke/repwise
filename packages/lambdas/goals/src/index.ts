@@ -65,6 +65,7 @@ export const handler = async (
   const queryParams = event.queryStringParameters ?? {};
   const userId = getUserId(event);
   const pk = `USER#${userId}`;
+  console.log('[goals] request', { method, path, userId, goalId: goalIdParam });
 
   try {
     // GET /goals/me
@@ -210,8 +211,10 @@ export const handler = async (
       return res.noContent();
     }
 
+    console.log('[goals] no route matched', { method, path });
     return res.badRequest('Not found');
   } catch (err) {
+    console.error('[goals] handler error', { error: err, message: err instanceof Error ? err.message : String(err) });
     return res.serverError(err);
   }
 };

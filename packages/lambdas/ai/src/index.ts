@@ -113,16 +113,28 @@ function parseExercisesFromResponse(text: string): WorkoutExercise[] {
 }
 
 export const handler: Handler<AiGenerateEvent, AiGenerateResult> = async (event) => {
+  console.log('[AI] handler invoked', {
+    userId: event.userId,
+    userPromptLength: event.userPrompt?.length ?? 0,
+    weightUnit: event.weightUnit,
+  });
   const { userId, userPrompt, weightUnit: weightUnitStr } = event;
   if (!userId || !userPrompt) {
+    console.error('[AI] validation failed: userId or userPrompt missing', { userId: !!userId, userPrompt: !!userPrompt });
     throw new Error('userId and userPrompt required');
   }
 
+  console.log('[AI] fetching catalog, recent workouts, active goals');
   const [catalog, recentWorkouts, activeGoals] = await Promise.all([
     getCatalog(),
     getRecentWorkouts(userId, 10),
     getActiveGoals(userId),
   ]);
+  console.log('[AI] data loaded', {
+    catalogCount: catalog.length,
+    recentWorkoutsCount: recentWorkouts.length,
+    activeGoalsCount: activeGoals.length,
+  });
 
   const weightUnit =
     weightUnitStr === 'KG' ? WeightUnit.KG : WeightUnit.LBS;
@@ -134,8 +146,10 @@ export const handler: Handler<AiGenerateEvent, AiGenerateResult> = async (event)
     activeGoals,
     weightUnit
   );
+  console.log('[AI] prompt built', { promptLength: prompt.length });
 
   const bedrock = new BedrockRuntimeClient({});
+  console.log('[AI] invoking Bedrock', { modelId: TITAN_MODEL_ID });
   const response = await bedrock.send(
     new InvokeModelCommand({
       modelId: TITAN_MODEL_ID,
@@ -157,6 +171,14 @@ export const handler: Handler<AiGenerateEvent, AiGenerateResult> = async (event)
     results?: Array<{ outputText?: string }>;
   };
   const text = parsed.results?.[0]?.outputText ?? '';
-  const exercises = parseExercisesFromResponse(text);
+  console.log('[AI] Bedrock response', { outputLength: text.length, outputPreview: text.slice(0, 200) });
+  let exercises: WorkoutExercise[];
+  try {
+    exercises = parseExercisesFromResponse(text);
+  } catch (parseErr) {
+    console.error('[AI] parseExercisesFromResponse failed', { error: parseErr, rawOutput: text.slice(0, 500) });
+    throw parseErr;
+  }
+  console.log('[AI] success', { exercisesCount: exercises.length });
   return { exercises };
 };

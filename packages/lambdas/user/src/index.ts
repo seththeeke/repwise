@@ -71,6 +71,7 @@ export const handler = async (
   const path = event.rawPath ?? event.requestContext.http.path ?? '';
   const pathParams = event.pathParameters ?? {};
   const usernameParam = pathParams.username;
+  console.log('[user] request', { method, path, username: usernameParam });
 
   try {
     // GET /users/me
@@ -127,8 +128,10 @@ export const handler = async (
       return res.ok(toPublicProfile(profile));
     }
 
+    console.log('[user] no route matched', { method, path });
     return res.badRequest('Not found');
   } catch (err) {
+    console.error('[user] handler error', { error: err, message: err instanceof Error ? err.message : String(err) });
     return res.serverError(err);
   }
 };

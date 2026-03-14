@@ -1,6 +1,7 @@
 /**
  * Run after first deploy. Requires WORKOUTS_TABLE env and AWS credentials.
- * npx ts-node scripts/seed-catalog.ts
+ * npx ts-node scripts/seed-catalog.ts [catalog-file]
+ * Default catalog: catalog-minimal.json. Use full-exercise-database.json for full catalog.
  */
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -13,11 +14,13 @@ if (!tableName) {
   process.exit(1);
 }
 
+const catalogFile = process.env.CATALOG_FILE ?? process.argv[2] ?? 'catalog-minimal.json';
+const catalogPath = join(__dirname, catalogFile);
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION ?? 'us-east-1' }));
-const catalogPath = join(__dirname, 'catalog-minimal.json');
 const catalog = JSON.parse(readFileSync(catalogPath, 'utf-8'));
 
 async function main() {
+  console.log('Seeding from', catalogFile, '(', catalog.length, 'exercises)');
   for (const ex of catalog) {
     const item = {
       PK: `EXERCISE#${ex.exerciseId}`,

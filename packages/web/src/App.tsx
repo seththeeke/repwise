@@ -9,6 +9,14 @@ import { ProfilePage } from './features/profile/ProfilePage';
 import { SettingsPage } from './features/profile/SettingsPage';
 import { GoalsPage } from './features/goals/GoalsPage';
 import { FeedPage } from './features/feed/FeedPage';
+import { NewWorkoutScreen } from './features/workoutBuilder/NewWorkoutScreen';
+import { AIWorkoutScreen } from './features/workoutBuilder/AIWorkoutScreen';
+import { SelectExercisesScreen } from './features/workoutBuilder/SelectExercisesScreen';
+import { ReviewWorkoutScreen } from './features/workoutBuilder/ReviewWorkoutScreen';
+import { WorkoutExecutionPage } from './features/workoutExecution/WorkoutExecutionPage';
+import { ExerciseCatalogPage } from './features/exerciseCatalog/ExerciseCatalogPage';
+import { ExerciseMetricsPage } from './features/metrics/ExerciseMetricsPage';
+import { ExerciseMetricsDetailPage } from './features/metrics/ExerciseMetricsDetailPage';
 import LoginDialog from './components/LoginDialog';
 import { usersApi } from './api/users';
 import { useAuthStore } from './stores/authStore';
@@ -138,6 +146,14 @@ function App() {
         />
         <Route path="/goals" element={<GoalsPage />} />
         <Route path="/feed" element={<FeedPage />} />
+        <Route path="/workout/new" element={<NewWorkoutScreen />} />
+        <Route path="/workout/new/ai" element={<AIWorkoutScreen />} />
+        <Route path="/workout/new/manual" element={<SelectExercisesScreen />} />
+        <Route path="/workout/review" element={<ReviewWorkoutScreen />} />
+        <Route path="/workout/execute/:id" element={<WorkoutExecutionPage />} />
+        <Route path="/exercises" element={<ExerciseCatalogPage />} />
+        <Route path="/metrics" element={<ExerciseMetricsPage />} />
+        <Route path="/metrics/exercises/:exerciseId" element={<ExerciseMetricsDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

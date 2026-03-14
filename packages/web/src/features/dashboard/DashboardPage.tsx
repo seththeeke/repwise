@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { useDashboardData } from './hooks/useDashboardData';
 import { DashboardHeader } from './DashboardHeader';
 import { StreakWidget } from '@/components/widgets/StreakWidget';
@@ -115,6 +116,15 @@ export function DashboardPage({
 
         <ActivityFeedWidget feedItems={feedItems} />
       </div>
+
+      {/* Floating Action Button - New Workout */}
+      <button
+        type="button"
+        onClick={() => navigate('/workout/new')}
+        className="fixed bottom-6 right-6 w-16 h-16 bg-primary hover:bg-primary-dark rounded-full shadow-lg shadow-primary/40 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+      >
+        <Plus className="w-8 h-8 text-white" />
+      </button>
     </div>
   );
 }
