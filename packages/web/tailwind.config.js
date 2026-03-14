@@ -9,9 +9,19 @@ export default {
           light: '#8B5CF6',
           dark: '#6D28D9',
         },
-        surface: {
-          secondary: '#F8F7FF',
+        accent: {
+          orange: '#F97316',
+          green: '#22C55E',
         },
+        surface: {
+          DEFAULT: '#FFFFFF',
+          secondary: '#F8F7FF',
+          dark: '#0F0F1A',
+        },
+      },
+      fontFamily: {
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'monospace'],
       },
     },
   },

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { getCurrentUser, signOut as amplifySignOut } from 'aws-amplify/auth';
 import { isCognitoConfigured } from './lib/amplify';
 import LandingPage from './pages/LandingPage';
-import DashboardPage from './pages/DashboardPage';
+import { DashboardPage } from './features/dashboard/DashboardPage';
 import LoginDialog from './components/LoginDialog';
 
 function ConfigRequired() {
@@ -92,7 +92,11 @@ function App() {
         <Route
           path="/"
           element={
-            <DashboardPage displayName={displayName} onLogout={handleLogout} />
+            <DashboardPage
+              displayName={displayName}
+              profilePhoto={undefined}
+              onLogout={handleLogout}
+            />
           }
         />
       </Routes>
