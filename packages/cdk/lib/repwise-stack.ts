@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import { ApiConstruct } from './api';
@@ -60,6 +61,32 @@ export class RepwiseStack extends cdk.Stack {
     tables.workoutsTable.grantReadWriteData(workoutLambda);
     tables.metricsTable.grantReadData(workoutLambda);
 
+    const metricsProcessorLambda = new NodejsFunction(this, 'MetricsProcessorLambda', {
+      entry: path.join(__dirname, '../../lambdas/metrics-processor/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: {
+        WORKOUTS_TABLE: tables.workoutsTable.tableName,
+        METRICS_TABLE: tables.metricsTable.tableName,
+      },
+    });
+    tables.workoutsTable.grantStreamRead(metricsProcessorLambda);
+    tables.workoutsTable.grantReadData(metricsProcessorLambda);
+    tables.metricsTable.grantReadWriteData(metricsProcessorLambda);
+    metricsProcessorLambda.addEventSource(
+      new eventsources.DynamoEventSource(tables.workoutsTable, {
+        startingPosition: lambda.StartingPosition.LATEST,
+      })
+    );
+
+    const metricsLambda = new NodejsFunction(this, 'MetricsLambda', {
+      entry: path.join(__dirname, '../../lambdas/metrics/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: { METRICS_TABLE: tables.metricsTable.tableName },
+    });
+    tables.metricsTable.grantReadData(metricsLambda);
+
     const api = new ApiConstruct(this, 'Api', auth.userPool, auth.userPoolClient);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me', userLambda, true);
     api.addRoute(apigwv2.HttpMethod.PATCH, '/users/me', userLambda, true);
@@ -70,6 +97,9 @@ export class RepwiseStack extends cdk.Stack {
     api.addRoute(apigwv2.HttpMethod.GET, '/workout-instances', workoutLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/workout-instances/{id}', workoutLambda, true);
     api.addRoute(apigwv2.HttpMethod.PATCH, '/workout-instances/{id}', workoutLambda, true);
+    api.addRoute(apigwv2.HttpMethod.GET, '/metrics/me/global', metricsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.GET, '/metrics/me/exercises', metricsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.GET, '/metrics/me/exercises/{exerciseId}', metricsLambda, true);
 
     new cdk.CfnOutput(this, 'UserPoolId', {
       value: auth.userPool.userPoolId,

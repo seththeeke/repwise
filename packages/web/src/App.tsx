@@ -1,8 +1,10 @@
+import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Authenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
+import { getCurrentUser, signOut as amplifySignOut } from 'aws-amplify/auth';
 import { isCognitoConfigured } from './lib/amplify';
+import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
+import LoginDialog from './components/LoginDialog';
 
 function ConfigRequired() {
   return (
@@ -27,29 +29,73 @@ function ConfigRequired() {
 }
 
 function App() {
+  const [user, setUser] = useState<{ username: string } | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  const loadUser = useCallback(async () => {
+    try {
+      const current = await getCurrentUser();
+      setUser({ username: current.username });
+    } catch {
+      setUser(null);
+    } finally {
+      setAuthChecked(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await amplifySignOut();
+    } finally {
+      setUser(null);
+    }
+  }, []);
+
+  const displayName =
+    user?.username?.includes('@')
+      ? user.username.split('@')[0]
+      : user?.username ?? 'User';
+
   if (!isCognitoConfigured) {
     return <ConfigRequired />;
   }
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <LandingPage onOpenLogin={() => setLoginOpen(true)} />
+        <LoginDialog
+          open={loginOpen}
+          onClose={() => setLoginOpen(false)}
+          onSuccess={loadUser}
+        />
+      </>
+    );
+  }
+
   return (
     <BrowserRouter>
-      <Authenticator>
-        {({ signOut, user }) => {
-          const displayName =
-            (user?.signInDetails?.loginId as string | undefined)?.split('@')[0] ??
-            (user?.username as string | undefined) ??
-            'User';
-          return (
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <DashboardPage displayName={displayName} onLogout={signOut} />
-                }
-              />
-            </Routes>
-          );
-        }}
-      </Authenticator>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <DashboardPage displayName={displayName} onLogout={handleLogout} />
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }
