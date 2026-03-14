@@ -4,3 +4,5 @@ export * from './ddb';
 export * from './response';
 export * from './auth';
 export * from './goalUtils';
+export * from './goalHelpers';
+export * from './feedFanout';

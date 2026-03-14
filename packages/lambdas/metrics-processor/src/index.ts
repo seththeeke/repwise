@@ -17,6 +17,7 @@ import {
   type TrendDataPoint,
   type PRRecord,
   WeightUnit,
+  evaluateGoals,
 } from '@repwise/shared';
 
 const METRIC_GLOBAL_SK = 'METRIC#GLOBAL';
@@ -242,4 +243,6 @@ async function processWorkoutCompletion(
       new TransactWriteCommand({ TransactItems: transactItems as never })
     );
   }
+
+  await evaluateGoals(userId, updatedGlobal, workout);
 }

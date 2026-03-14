@@ -6,13 +6,17 @@ import {
   UpdateCommand,
   BatchGetCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import {
   ddb,
   WORKOUTS_TABLE,
   METRICS_TABLE,
+  USERS_TABLE,
   getUserId,
+  runFeedFanout,
   type WorkoutInstance,
   type WorkoutExercise,
+  type UserProfile,
   WorkoutStatus,
   WorkoutSource,
   PermissionType,
@@ -21,6 +25,7 @@ import {
 import * as res from '@repwise/shared';
 
 const WORKOUT_SK_PREFIX = 'WORKOUT#';
+const PROFILE_SK = 'PROFILE';
 
 function parseBody<T>(body: string | null): T | null {
   if (!body) return null;
@@ -118,9 +123,43 @@ export const handler = async (
   try {
     // POST /workout-instances
     if (method === 'POST' && path === '/workout-instances') {
-      const body = parseBody<{ source?: string; permissionType?: string; exercises: WorkoutExercise[] }>(
-        event.body ?? null
-      );
+      const body = parseBody<{
+        source?: string;
+        permissionType?: string;
+        exercises?: WorkoutExercise[];
+        aiPrompt?: string;
+      }>(event.body ?? null);
+      if (body?.aiPrompt) {
+        const aiLambdaArn = process.env.AI_LAMBDA_ARN;
+        if (!aiLambdaArn) return res.serverError(new Error('AI generation not configured'));
+        const lambda = new LambdaClient({});
+        const payload = {
+          userId,
+          userPrompt: body.aiPrompt,
+          weightUnit: undefined as string | undefined,
+        };
+        const profileOut = await ddb.send(
+          new GetCommand({
+            TableName: USERS_TABLE,
+            Key: { PK: `USER#${userId}`, SK: PROFILE_SK },
+          })
+        );
+        const profile = profileOut.Item as { weightUnit?: string } | undefined;
+        if (profile?.weightUnit) payload.weightUnit = profile.weightUnit;
+        const invokeResult = await lambda.send(
+          new InvokeCommand({
+            FunctionName: aiLambdaArn,
+            InvocationType: 'RequestResponse',
+            Payload: JSON.stringify(payload),
+          })
+        );
+        if (invokeResult.FunctionError)
+          return res.serverError(new Error(invokeResult.FunctionError));
+        const payloadResult = invokeResult.Payload
+          ? JSON.parse(Buffer.from(invokeResult.Payload).toString()) as { exercises: WorkoutExercise[] }
+          : { exercises: [] };
+        return res.ok({ suggestedExercises: payloadResult.exercises ?? [] });
+      }
       if (!body?.exercises?.length) return res.badRequest('exercises array required');
       const source = (body.source === 'ai_generated' ? WorkoutSource.AI_GENERATED : WorkoutSource.MANUAL) as WorkoutSource;
       const permissionType = (body.permissionType as PermissionType) ?? PermissionType.FOLLOWERS_ONLY;
@@ -278,7 +317,27 @@ export const handler = async (
             ReturnValues: 'ALL_NEW',
           })
         );
-        return res.ok(toResponse(updated.Attributes as WorkoutInstance));
+        const completedWorkout = updated.Attributes as WorkoutInstance;
+        try {
+          const profileOut = await ddb.send(
+            new GetCommand({
+              TableName: USERS_TABLE,
+              Key: { PK: `USER#${userId}`, SK: PROFILE_SK },
+            })
+          );
+          const profile = profileOut.Item as UserProfile | undefined;
+          if (profile) {
+            await runFeedFanout(completedWorkout, {
+              userId,
+              username: profile.username,
+              displayName: profile.displayName,
+              profilePhoto: profile.profilePhoto,
+            }, current.permissionType);
+          }
+        } catch (feedErr) {
+          console.error('Feed fan-out failed', feedErr);
+        }
+        return res.ok(toResponse(completedWorkout));
       }
 
       // Partial update (notes, permissionType, exercise fields)

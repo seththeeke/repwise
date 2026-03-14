@@ -17,7 +17,7 @@ describe.skipIf(!process.env.API_BASE_URL)('Workout Instances', () => {
     exerciseId = exercises.data[0].exerciseId;
   });
 
-  afterAll(async () => teardown.cleanup());
+  afterAll(async () => { if (teardown) await teardown.cleanup(); });
 
   it('POST /workout-instances creates an in-progress workout', async () => {
     const res = await client.post('/workout-instances', {

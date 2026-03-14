@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -56,10 +57,12 @@ export class RepwiseStack extends cdk.Stack {
       environment: {
         WORKOUTS_TABLE: tables.workoutsTable.tableName,
         METRICS_TABLE: tables.metricsTable.tableName,
+        USERS_TABLE: tables.usersTable.tableName,
       },
     });
     tables.workoutsTable.grantReadWriteData(workoutLambda);
     tables.metricsTable.grantReadData(workoutLambda);
+    tables.usersTable.grantReadWriteData(workoutLambda); // read profile; write feed items on completion
 
     const metricsProcessorLambda = new NodejsFunction(this, 'MetricsProcessorLambda', {
       entry: path.join(__dirname, '../../lambdas/metrics-processor/src/index.ts'),
@@ -87,6 +90,49 @@ export class RepwiseStack extends cdk.Stack {
     });
     tables.metricsTable.grantReadData(metricsLambda);
 
+    const goalsLambda = new NodejsFunction(this, 'GoalsLambda', {
+      entry: path.join(__dirname, '../../lambdas/goals/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: {
+        METRICS_TABLE: tables.metricsTable.tableName,
+        WORKOUTS_TABLE: tables.workoutsTable.tableName,
+      },
+    });
+    tables.metricsTable.grantReadWriteData(goalsLambda);
+    tables.workoutsTable.grantReadData(goalsLambda);
+
+    const feedLambda = new NodejsFunction(this, 'FeedLambda', {
+      entry: path.join(__dirname, '../../lambdas/feed/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: { USERS_TABLE: tables.usersTable.tableName },
+    });
+    tables.usersTable.grantReadData(feedLambda);
+
+    const aiLambda = new NodejsFunction(this, 'AiLambda', {
+      entry: path.join(__dirname, '../../lambdas/ai/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: {
+        WORKOUTS_TABLE: tables.workoutsTable.tableName,
+        METRICS_TABLE: tables.metricsTable.tableName,
+      },
+    });
+    tables.workoutsTable.grantReadData(aiLambda);
+    tables.metricsTable.grantReadData(aiLambda);
+    aiLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['bedrock:InvokeModel'],
+        resources: [
+          `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-text-express-v1`,
+        ],
+      })
+    );
+
+    workoutLambda.addEnvironment('AI_LAMBDA_ARN', aiLambda.functionArn);
+    aiLambda.grantInvoke(workoutLambda);
+
     const api = new ApiConstruct(this, 'Api', auth.userPool, auth.userPoolClient);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me', userLambda, true);
     api.addRoute(apigwv2.HttpMethod.PATCH, '/users/me', userLambda, true);
@@ -100,6 +146,10 @@ export class RepwiseStack extends cdk.Stack {
     api.addRoute(apigwv2.HttpMethod.GET, '/metrics/me/global', metricsLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/metrics/me/exercises', metricsLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/metrics/me/exercises/{exerciseId}', metricsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.GET, '/goals/me', goalsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.POST, '/goals/me', goalsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.DELETE, '/goals/me/{goalId}', goalsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.GET, '/feed', feedLambda, true);
 
     new cdk.CfnOutput(this, 'UserPoolId', {
       value: auth.userPool.userPoolId,
