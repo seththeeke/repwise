@@ -30,8 +30,9 @@ export function ReviewWorkoutScreen() {
   const exercises = draft?.exercises ?? [];
   const isAI = draft?.source === WorkoutSource.AI_GENERATED;
 
+  // Don't redirect to builder when we're in the middle of starting (clearDraft causes empty draft before navigate completes)
   if (!draft || exercises.length === 0) {
-    navigate('/workout/new');
+    if (!starting) navigate('/workout/new');
     return null;
   }
 
@@ -100,7 +101,7 @@ export function ReviewWorkoutScreen() {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto p-4 space-y-3">
+      <div className="flex-1 overflow-auto p-4 pb-28 space-y-3">
         {exercises.map((exercise, index) => (
           <ReviewExerciseRow
             key={`${exercise.exerciseId}-${index}`}
@@ -123,7 +124,8 @@ export function ReviewWorkoutScreen() {
         ))}
       </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      {/* Fixed Start Workout bar - always visible without scrolling */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur supports-[backdrop-filter]:bg-white dark:supports-[backdrop-filter]:bg-gray-800">
         <button
           type="button"
           onClick={handleStartWorkout}

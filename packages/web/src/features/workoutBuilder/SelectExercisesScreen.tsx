@@ -217,7 +217,7 @@ export function SelectExercisesScreen() {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 pb-28">
         {isLoading ? (
           <p className="text-gray-500 dark:text-gray-400 text-center py-8">Loading exercises...</p>
         ) : (
@@ -255,7 +255,8 @@ export function SelectExercisesScreen() {
         )}
       </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      {/* Fixed Start Workout bar - always visible without scrolling */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur supports-[backdrop-filter]:bg-white dark:supports-[backdrop-filter]:bg-gray-800">
         <button
           type="button"
           onClick={handleStartWorkout}
