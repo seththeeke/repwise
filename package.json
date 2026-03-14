@@ -5,7 +5,9 @@
   "description": "Repwise — fitness app for creating and tracking workouts",
   "scripts": {
     "build": "pnpm -r build",
-    "clean": "pnpm -r exec -- rm -rf dist .turbo node_modules 2>/dev/null; rm -rf node_modules"
+    "clean": "pnpm -r exec -- rm -rf dist .turbo node_modules 2>/dev/null; rm -rf node_modules",
+    "clear-user-data": "bash scripts/clear-user-data.sh",
+    "clear-test-user-data": "bash scripts/clear-test-user-data.sh"
   },
   "engines": {
     "node": ">=20"
