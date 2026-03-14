@@ -247,7 +247,12 @@ export function WorkoutExecutionPage() {
           <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mb-6">
             <Dumbbell className="w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-bold text-center mb-6">{currentExercise.exerciseName}</h1>
+          <h1 className="text-2xl font-bold text-center mb-2">{currentExercise.exerciseName}</h1>
+          <p className="text-gray-400 text-center mb-6">
+            {currentExercise.modality === ExerciseModality.DURATION
+              ? `${currentExercise.durationSeconds ?? 60} seconds`
+              : `${currentExercise.sets ?? 3} sets × ${currentExercise.reps ?? 8} reps`}
+          </p>
 
           {currentExercise.modality === ExerciseModality.DURATION ? (
             <DurationTimerCard

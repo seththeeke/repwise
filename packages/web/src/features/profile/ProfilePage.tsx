@@ -10,7 +10,7 @@ import { PersonalRecordsWidget } from '@/components/widgets/PersonalRecordsWidge
 import { WeekCalendarWidget } from '@/components/widgets/WeekCalendarWidget';
 import { RecentWorkoutsWidget } from '@/components/widgets/RecentWorkoutsWidget';
 import { Spinner } from '@/components/ui/Spinner';
-import { LogOut, Flame, Trophy, Calendar } from 'lucide-react';
+import { Flame, Trophy, Calendar, Plus } from 'lucide-react';
 
 interface ProfilePageProps {
   onLogout: () => void;
@@ -61,7 +61,7 @@ export function ProfilePage({ onLogout }: ProfilePageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
-      <ProfileHeader profile={profile} onEditClick={() => setEditOpen(true)} />
+      <ProfileHeader profile={profile} onEditClick={() => setEditOpen(true)} onLogout={onLogout} />
 
       <div className="px-4 -mt-16">
         <ProfileCard profile={profile} onEditClick={() => setEditOpen(true)} />
@@ -127,6 +127,7 @@ export function ProfilePage({ onLogout }: ProfilePageProps) {
         {globalMetrics ? (
           <div className="mt-6">
             <StreakWidget
+              variant="light"
               currentStreak={globalMetrics.currentStreak}
               longestStreak={globalMetrics.longestStreak}
             />
@@ -152,16 +153,6 @@ export function ProfilePage({ onLogout }: ProfilePageProps) {
             onWorkoutPress={(id) => navigate(`/workouts/${id}`)}
           />
         </div>
-
-        {/* Logout */}
-        <button
-          type="button"
-          onClick={() => onLogout()}
-          className="w-full mt-6 py-3 px-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
-        >
-          <LogOut className="w-5 h-5" />
-          Log out
-        </button>
       </div>
 
       <EditProfileSheet
@@ -173,6 +164,16 @@ export function ProfilePage({ onLogout }: ProfilePageProps) {
           setEditOpen(false);
         }}
       />
+
+      {/* Floating Action Button - Add Goal */}
+      <button
+        type="button"
+        onClick={() => navigate('/goals?add=1')}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-primary hover:bg-primary-dark rounded-full shadow-lg shadow-primary/40 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        aria-label="Add goal"
+      >
+        <Plus className="w-7 h-7 text-white" />
+      </button>
     </div>
   );
 }

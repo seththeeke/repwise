@@ -17,6 +17,8 @@ import { WorkoutExecutionPage } from './features/workoutExecution/WorkoutExecuti
 import { ExerciseCatalogPage } from './features/exerciseCatalog/ExerciseCatalogPage';
 import { ExerciseMetricsPage } from './features/metrics/ExerciseMetricsPage';
 import { ExerciseMetricsDetailPage } from './features/metrics/ExerciseMetricsDetailPage';
+import { WorkoutDetailPage } from './features/workout/WorkoutDetailPage';
+import { WorkoutsHistoryPage } from './features/workout/WorkoutsHistoryPage';
 import LoginDialog from './components/LoginDialog';
 import { usersApi } from './api/users';
 import { useAuthStore } from './stores/authStore';
@@ -154,6 +156,8 @@ function App() {
         <Route path="/exercises" element={<ExerciseCatalogPage />} />
         <Route path="/metrics" element={<ExerciseMetricsPage />} />
         <Route path="/metrics/exercises/:exerciseId" element={<ExerciseMetricsDetailPage />} />
+        <Route path="/workouts" element={<WorkoutsHistoryPage />} />
+        <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

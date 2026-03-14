@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Play, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Sparkles, Play, RefreshCw, GripVertical } from 'lucide-react';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { useWorkoutSessionStore } from '@/stores/workoutSessionStore';
 import { workoutsApi } from '@/api/workouts';
@@ -16,6 +16,7 @@ export function ReviewWorkoutScreen() {
   const setDraft = useWorkoutDraftStore((s) => s.setDraft);
   const updateExerciseInDraft = useWorkoutDraftStore((s) => s.updateExerciseInDraft);
   const removeExerciseFromDraft = useWorkoutDraftStore((s) => s.removeExerciseFromDraft);
+  const reorderExercisesInDraft = useWorkoutDraftStore((s) => s.reorderExercisesInDraft);
   const clearDraft = useWorkoutDraftStore((s) => s.clearDraft);
   const startSession = useWorkoutSessionStore((s) => s.startSession);
 
@@ -25,6 +26,8 @@ export function ReviewWorkoutScreen() {
   const [regenerating, setRegenerating] = useState(false);
   const [regenerateProgress, setRegenerateProgress] = useState<ProgressStep | null>(null);
   const [regenerateError, setRegenerateError] = useState<string | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   const isAI = draft?.source === WorkoutSource.AI_GENERATED;
   const { data: catalogExercises = [] } = useQuery({
@@ -106,6 +109,35 @@ export function ReviewWorkoutScreen() {
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData('text/plain', String(index));
+    e.dataTransfer.effectAllowed = 'move';
+    setDragIndex(index);
+  };
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropIndex(index);
+  };
+  const handleDragLeave = () => {
+    setDropIndex(null);
+  };
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    setDropIndex(null);
+    const fromIndex = dragIndex ?? (e.dataTransfer.getData('text/plain') ? parseInt(e.dataTransfer.getData('text/plain'), 10) : null);
+    if (fromIndex == null || Number.isNaN(fromIndex) || fromIndex === toIndex) {
+      setDragIndex(null);
+      return;
+    }
+    reorderExercisesInDraft(fromIndex, toIndex);
+    setDragIndex(null);
+  };
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDropIndex(null);
+  };
+
   const handleChooseSwap = (exerciseId: string, name: string) => {
     if (swapIndex === null) return;
     const ex = Array.isArray(catalogExercises)
@@ -177,24 +209,48 @@ export function ReviewWorkoutScreen() {
 
       <div className="flex-1 overflow-auto p-4 pb-28 space-y-3">
         {exercises.map((exercise, index) => (
-          <ReviewExerciseRow
+          <div
             key={`${exercise.exerciseId}-${index}`}
-            exercise={exercise}
-            index={index}
-            selected={selectedIndices.has(index)}
-            onToggleSelect={() => toggleSelect(index)}
-            onUpdate={(updates) => updateExerciseInDraft(index, updates)}
-            onRemove={() => removeExerciseFromDraft(index)}
-            onSwap={() => setSwapIndex(index)}
-            swapMode={swapIndex === index}
-            onCloseSwap={() => setSwapIndex(null)}
-            swapOptions={swapOptions.map((c: { exerciseId: string; name: string; muscleGroups: string[] }) => ({
-              exerciseId: c.exerciseId,
-              name: c.name,
-              muscleGroups: c.muscleGroups ?? [],
-            }))}
-            onChooseSwap={handleChooseSwap}
-          />
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            className={`rounded-xl transition-colors ${
+              dragIndex === index ? 'opacity-50' : ''
+            } ${dropIndex === index && dragIndex !== index ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900' : ''}`}
+          >
+            <div className="flex items-stretch gap-1">
+              <div
+                role="button"
+                tabIndex={0}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                className="flex items-center justify-center w-8 flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500 touch-none"
+                aria-label="Drag to reorder"
+              >
+                <GripVertical className="w-5 h-5 pointer-events-none" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <ReviewExerciseRow
+                  exercise={exercise}
+                  index={index}
+                  selected={selectedIndices.has(index)}
+                  onToggleSelect={() => toggleSelect(index)}
+                  onUpdate={(updates) => updateExerciseInDraft(index, updates)}
+                  onRemove={() => removeExerciseFromDraft(index)}
+                  onSwap={() => setSwapIndex(index)}
+                  swapMode={swapIndex === index}
+                  onCloseSwap={() => setSwapIndex(null)}
+                  swapOptions={swapOptions.map((c: { exerciseId: string; name: string; muscleGroups: string[] }) => ({
+                    exerciseId: c.exerciseId,
+                    name: c.name,
+                    muscleGroups: c.muscleGroups ?? [],
+                  }))}
+                  onChooseSwap={handleChooseSwap}
+                />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 

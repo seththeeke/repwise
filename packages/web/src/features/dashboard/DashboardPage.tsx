@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useDashboardData } from './hooks/useDashboardData';
+import { CalendarViewModal } from '@/components/widgets/CalendarViewModal';
 import { DashboardHeader } from './DashboardHeader';
 import { StreakWidget } from '@/components/widgets/StreakWidget';
 import { StatsRow } from '@/components/widgets/StatsRow';
@@ -22,6 +24,7 @@ export function DashboardPage({
   profilePhoto,
 }: DashboardPageProps) {
   const navigate = useNavigate();
+  const [showCalendar, setShowCalendar] = useState(false);
   const { data, isLoading, error } = useDashboardData();
 
   if (isLoading) {
@@ -71,6 +74,17 @@ export function DashboardPage({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+      {showCalendar && (
+        <CalendarViewModal
+          completedDates={global?.completedDates ?? []}
+          recentWorkouts={recentWorkouts}
+          onClose={() => setShowCalendar(false)}
+          onWorkoutPress={(id) => {
+            setShowCalendar(false);
+            navigate(`/workouts/${id}`);
+          }}
+        />
+      )}
       <ToastContainer />
 
       <div className="bg-gradient-to-b from-primary to-primary-dark px-4 pt-12 pb-8">
@@ -105,7 +119,7 @@ export function DashboardPage({
 
         <WeekCalendarWidget
           completedDates={global?.completedDates ?? []}
-          onWeekPress={() => {}}
+          onWeekPress={() => setShowCalendar(true)}
         />
 
         <RecentWorkoutsWidget

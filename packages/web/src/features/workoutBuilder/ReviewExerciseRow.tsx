@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, List, RefreshCw, Trash2, Minus, Plus } from 'lucide-react';
+import { Check, List, ArrowLeftRight, Trash2, Minus, Plus } from 'lucide-react';
 import type { WorkoutExercise } from '@/types';
 import { ExerciseModality } from '@/types';
 
@@ -94,7 +94,7 @@ export function ReviewExerciseRow({
             <List className="w-5 h-5" />
           </button>
           <button type="button" onClick={onSwap} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Swap">
-            <RefreshCw className="w-5 h-5 text-gray-500" />
+            <ArrowLeftRight className="w-5 h-5 text-gray-500" />
           </button>
           <button type="button" onClick={onRemove} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" title="Remove">
             <Trash2 className="w-5 h-5 text-red-500" />

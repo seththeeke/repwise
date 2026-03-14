@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Wand2, Plus } from 'lucide-react';
+import { ArrowLeft, Wand2, Plus, History } from 'lucide-react';
 
 export function NewWorkoutScreen() {
   const navigate = useNavigate();
@@ -61,6 +61,26 @@ export function NewWorkoutScreen() {
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">
                   Pick exercises yourself
+                </p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/workouts?from=builder')}
+            className="w-full p-6 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 text-left hover:border-primary/50 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
+                <History className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                  Choose from past workout
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  Redo a previous workout
                 </p>
               </div>
             </div>
