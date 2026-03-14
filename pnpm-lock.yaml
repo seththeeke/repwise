@@ -76,6 +76,9 @@ importers:
       '@repwise/shared':
         specifier: workspace:*
         version: link:../shared
+      aws-jwt-verify:
+        specifier: ^4.0.1
+        version: 4.0.1
     devDependencies:
       '@types/aws-lambda':
         specifier: ^8.10.145
@@ -2053,6 +2056,10 @@ packages:
     resolution: {integrity: sha512-69AVF04cxbAhYzmeJYtUF5bs6ruNnH05EQZJfjadk5Lpg+HVaJY2NjG/2qgsMmKrfRgvLet73Ir8ehVlAaaGng==}
     engines: {node: '>= 18.0.0'}
     hasBin: true
+
+  aws-jwt-verify@4.0.1:
+    resolution: {integrity: sha512-kzvi71eD3w/mCpYRUY7cz6DX4bfYihGdI2yV3FYQ2JuZZenqAqDPz0gWj0ew6vlAtdEVBNb7p+Dm2TAIxpVYMA==}
+    engines: {node: '>=14.0.0'}
 
   axios@1.13.6:
     resolution: {integrity: sha512-ChTCHMouEe2kn713WHbQGcuYrr6fXTBiu460OTwWrWob16g1bXn4vtz07Ope7ewMozJAnEquLk5lWQWtBig9DQ==}
@@ -5200,6 +5207,8 @@ snapshots:
       constructs: 10.5.1
 
   aws-cdk@2.1111.0: {}
+
+  aws-jwt-verify@4.0.1: {}
 
   axios@1.13.6:
     dependencies:

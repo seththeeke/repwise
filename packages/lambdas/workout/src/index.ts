@@ -6,7 +6,6 @@ import {
   UpdateCommand,
   BatchGetCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import {
   ddb,
   WORKOUTS_TABLE,
@@ -128,50 +127,12 @@ export const handler = async (
         source?: string;
         permissionType?: string;
         exercises?: WorkoutExercise[];
-        aiPrompt?: string;
+        aiPrompt?: unknown;
       }>(event.body ?? null);
-      if (body?.aiPrompt) {
-        console.log('[workout] AI generate path', { userId, aiPromptLength: body.aiPrompt.length });
-        const aiLambdaArn = process.env.AI_LAMBDA_ARN;
-        if (!aiLambdaArn) {
-          console.error('[workout] AI_LAMBDA_ARN not set');
-          return res.serverError(new Error('AI generation not configured'));
-        }
-        const lambda = new LambdaClient({});
-        const payload = {
-          userId,
-          userPrompt: body.aiPrompt,
-          weightUnit: undefined as string | undefined,
-        };
-        const profileOut = await ddb.send(
-          new GetCommand({
-            TableName: USERS_TABLE,
-            Key: { PK: `USER#${userId}`, SK: PROFILE_SK },
-          })
+      if (body?.aiPrompt !== undefined && body?.aiPrompt !== null) {
+        return res.badRequest(
+          'AI generation is not available on this endpoint. Use the AI workout stream endpoint (see API_BASE_URL_AI or docs) with Accept: text/event-stream.'
         );
-        const profile = profileOut.Item as { weightUnit?: string } | undefined;
-        if (profile?.weightUnit) payload.weightUnit = profile.weightUnit;
-        console.log('[workout] invoking AI lambda', { aiLambdaArn: aiLambdaArn.slice(-20) });
-        const invokeResult = await lambda.send(
-          new InvokeCommand({
-            FunctionName: aiLambdaArn,
-            InvocationType: 'RequestResponse',
-            Payload: JSON.stringify(payload),
-          })
-        );
-        if (invokeResult.FunctionError) {
-          console.error('[workout] AI lambda error', {
-            FunctionError: invokeResult.FunctionError,
-            Payload: invokeResult.Payload ? Buffer.from(invokeResult.Payload).toString().slice(0, 500) : undefined,
-          });
-          return res.serverError(new Error(invokeResult.FunctionError));
-        }
-        const payloadResult = invokeResult.Payload
-          ? JSON.parse(Buffer.from(invokeResult.Payload).toString()) as { exercises: WorkoutExercise[] }
-          : { exercises: [] };
-        const count = payloadResult.exercises?.length ?? 0;
-        console.log('[workout] AI lambda success', { suggestedExercisesCount: count });
-        return res.ok({ suggestedExercises: payloadResult.exercises ?? [] });
       }
       if (!body?.exercises?.length) return res.badRequest('exercises array required');
       const source = (body.source === 'ai_generated' ? WorkoutSource.AI_GENERATED : WorkoutSource.MANUAL) as WorkoutSource;

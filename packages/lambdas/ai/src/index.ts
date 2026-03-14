@@ -1,184 +1,154 @@
-import type { Handler } from 'aws-lambda';
+import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import {
-  BedrockRuntimeClient,
-  InvokeModelCommand,
-} from '@aws-sdk/client-bedrock-runtime';
-import { QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import {
-  ddb,
-  WORKOUTS_TABLE,
-  METRICS_TABLE,
-  queryGoalsByStatus,
-  type ExerciseCatalogItem,
-  type WorkoutInstance,
-  type WorkoutExercise,
-  type Goal,
-  GoalStatus,
-  WeightUnit,
-} from '@repwise/shared';
+  runFullFlow,
+  runRegenerateFlow,
+  type RegenerateContext,
+} from './flows';
+import type { WorkoutExercise } from '@repwise/shared';
+import { WeightUnit } from '@repwise/shared';
 
-const EXERCISE_PK_PREFIX = 'EXERCISE#';
-const METADATA_SK = 'METADATA';
-const WORKOUT_SK_PREFIX = 'WORKOUT#';
-
-/** Amazon Titan Text Express — no API key; uses IAM. Enable in Bedrock console (Model access) if needed. */
-const TITAN_MODEL_ID = 'amazon.titan-text-express-v1';
-
-export interface AiGenerateEvent {
-  userId: string;
-  userPrompt: string;
-  weightUnit?: string;
+interface LambdaResponseStream {
+  write(chunk: string): void;
+  setContentType(value: string): void;
+  end(): void;
 }
 
-export interface AiGenerateResult {
-  exercises: WorkoutExercise[];
-}
-
-async function getCatalog(): Promise<ExerciseCatalogItem[]> {
-  const out = await ddb.send(
-    new ScanCommand({
-      TableName: WORKOUTS_TABLE,
-      FilterExpression: 'begins_with(PK, :prefix) AND SK = :sk',
-      ExpressionAttributeValues: {
-        ':prefix': EXERCISE_PK_PREFIX,
-        ':sk': METADATA_SK,
-      },
-    })
-  );
-  return (out.Items ?? []) as ExerciseCatalogItem[];
-}
-
-async function getRecentWorkouts(userId: string, limit: number): Promise<WorkoutInstance[]> {
-  const out = await ddb.send(
-    new QueryCommand({
-      TableName: WORKOUTS_TABLE,
-      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-      ExpressionAttributeValues: {
-        ':pk': `USER#${userId}`,
-        ':sk': WORKOUT_SK_PREFIX,
-      },
-      Limit: limit,
-      ScanIndexForward: false,
-    })
-  );
-  const items = (out.Items ?? []) as WorkoutInstance[];
-  return items.filter((w) => w.status === 'completed');
-}
-
-async function getActiveGoals(userId: string): Promise<Goal[]> {
-  return queryGoalsByStatus(userId, GoalStatus.ACTIVE);
-}
-
-function buildPrompt(
-  userPrompt: string,
-  catalog: ExerciseCatalogItem[],
-  recentWorkouts: WorkoutInstance[],
-  activeGoals: Goal[],
-  weightUnit: WeightUnit
-): string {
-  return `You are a professional fitness coach building a personalized workout.
-
-User request: "${userPrompt}"
-
-User's active goals — use these to inform exercise selection and priorities:
-${JSON.stringify(activeGoals, null, 2)}
-
-Available exercises:
-${JSON.stringify(catalog, null, 2)}
-
-Recent workouts — avoid repeating the same primary muscle groups from the last 1-2 sessions:
-${JSON.stringify(recentWorkouts.slice(0, 5), null, 2)}
-
-Return ONLY a valid JSON array of WorkoutExercise objects. No explanation. No markdown. No code fences.
-Each object must include: exerciseId, exerciseName, modality, sets, reps or durationSeconds, orderIndex, skipped (false).
-Do not include weight — the user will enter that during execution.`;
-}
-
-function parseExercisesFromResponse(text: string): WorkoutExercise[] {
-  let json = text.trim();
-  const codeBlock = /```(?:json)?\s*([\s\S]*?)```/.exec(json);
-  if (codeBlock) json = codeBlock[1].trim();
-  const parsed = JSON.parse(json) as unknown;
-  const arr = Array.isArray(parsed) ? parsed : [];
-  return arr.map((item: Record<string, unknown>, i: number) => ({
-    exerciseId: String(item.exerciseId ?? ''),
-    exerciseName: String(item.exerciseName ?? item.name ?? ''),
-    modality: (item.modality as WorkoutExercise['modality']) ?? 'sets_reps',
-    sets: item.sets != null ? Number(item.sets) : undefined,
-    reps: item.reps != null ? Number(item.reps) : undefined,
-    durationSeconds: item.durationSeconds != null ? Number(item.durationSeconds) : undefined,
-    skipped: false,
-    orderIndex: item.orderIndex != null ? Number(item.orderIndex) : i,
-  }));
-}
-
-export const handler: Handler<AiGenerateEvent, AiGenerateResult> = async (event) => {
-  console.log('[AI] handler invoked', {
-    userId: event.userId,
-    userPromptLength: event.userPrompt?.length ?? 0,
-    weightUnit: event.weightUnit,
-  });
-  const { userId, userPrompt, weightUnit: weightUnitStr } = event;
-  if (!userId || !userPrompt) {
-    console.error('[AI] validation failed: userId or userPrompt missing', { userId: !!userId, userPrompt: !!userPrompt });
-    throw new Error('userId and userPrompt required');
-  }
-
-  console.log('[AI] fetching catalog, recent workouts, active goals');
-  const [catalog, recentWorkouts, activeGoals] = await Promise.all([
-    getCatalog(),
-    getRecentWorkouts(userId, 10),
-    getActiveGoals(userId),
-  ]);
-  console.log('[AI] data loaded', {
-    catalogCount: catalog.length,
-    recentWorkoutsCount: recentWorkouts.length,
-    activeGoalsCount: activeGoals.length,
-  });
-
-  const weightUnit =
-    weightUnitStr === 'KG' ? WeightUnit.KG : WeightUnit.LBS;
-
-  const prompt = buildPrompt(
-    userPrompt,
-    catalog,
-    recentWorkouts,
-    activeGoals,
-    weightUnit
-  );
-  console.log('[AI] prompt built', { promptLength: prompt.length });
-
-  const bedrock = new BedrockRuntimeClient({});
-  console.log('[AI] invoking Bedrock', { modelId: TITAN_MODEL_ID });
-  const response = await bedrock.send(
-    new InvokeModelCommand({
-      modelId: TITAN_MODEL_ID,
-      contentType: 'application/json',
-      accept: 'application/json',
-      body: JSON.stringify({
-        inputText: prompt,
-        textGenerationConfig: {
-          maxTokenCount: 4096,
-          temperature: 0.3,
-          topP: 0.9,
-        },
-      }),
-    })
-  );
-
-  const decoded = new TextDecoder().decode(response.body);
-  const parsed = JSON.parse(decoded) as {
-    results?: Array<{ outputText?: string }>;
-  };
-  const text = parsed.results?.[0]?.outputText ?? '';
-  console.log('[AI] Bedrock response', { outputLength: text.length, outputPreview: text.slice(0, 200) });
-  let exercises: WorkoutExercise[];
-  try {
-    exercises = parseExercisesFromResponse(text);
-  } catch (parseErr) {
-    console.error('[AI] parseExercisesFromResponse failed', { error: parseErr, rawOutput: text.slice(0, 500) });
-    throw parseErr;
-  }
-  console.log('[AI] success', { exercisesCount: exercises.length });
-  return { exercises };
+/** Injected by the Lambda Node.js runtime at runtime (not a requireable module). */
+declare const awslambda: {
+  streamifyResponse: (
+    handler: (
+      event: unknown,
+      responseStream: LambdaResponseStream,
+      context: unknown
+    ) => Promise<void>
+  ) => unknown;
 };
+
+/** Lambda Function URL request (no authorizer; we validate JWT in Lambda). */
+export interface FunctionUrlRequest {
+  requestContext: { http: { method: string; path: string }; requestId: string };
+  headers: Record<string, string>;
+  body: string | null;
+  isBase64Encoded?: boolean;
+}
+
+export interface StreamBody {
+  aiPrompt?: string;
+  regenerateContext?: RegenerateContext;
+  /** Full current exercises when using regenerateContext (to merge replacements). */
+  currentExercises?: WorkoutExercise[];
+  weightUnit?: 'LBS' | 'KG';
+}
+
+const USER_POOL_ID = process.env.USER_POOL_ID!;
+const CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
+
+async function getUserIdFromEvent(event: FunctionUrlRequest): Promise<string> {
+  const auth =
+    event.headers?.authorization ||
+    event.headers?.Authorization ||
+    '';
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  if (!token) throw new Error('Missing Authorization header');
+  const { CognitoJwtVerifier } = await import('aws-jwt-verify');
+  const verifier = CognitoJwtVerifier.create({
+    userPoolId: USER_POOL_ID,
+    tokenUse: 'id',
+    clientId: CLIENT_ID,
+  });
+  const payload = await verifier.verify(token);
+  const sub = payload.sub as string;
+  if (!sub) throw new Error('Invalid token');
+  return sub;
+}
+
+function writeSSE(
+  stream: LambdaResponseStream,
+  event: string,
+  data: Record<string, unknown>
+): void {
+  stream.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+export const streamHandler = awslambda.streamifyResponse(
+  async (
+    event: unknown,
+    responseStream: LambdaResponseStream,
+    _context: unknown
+  ): Promise<void> => {
+    const req = event as FunctionUrlRequest;
+    responseStream.setContentType('text/event-stream; charset=utf-8');
+    console.log('[AI stream] request', {
+      method: req.requestContext?.http?.method,
+      path: req.requestContext?.http?.path,
+    });
+
+    try {
+      if (req.requestContext?.http?.method !== 'POST') {
+        writeSSE(responseStream, 'error', { message: 'Method not allowed' });
+        responseStream.end();
+        return;
+      }
+
+      const userId = await getUserIdFromEvent(req);
+      console.log('[AI stream] authenticated', { userId: userId.slice(0, 8) + '...' });
+      let body: StreamBody = {};
+      const rawBody = req.body;
+      if (rawBody) {
+        const decoded = req.isBase64Encoded
+          ? Buffer.from(rawBody, 'base64').toString('utf8')
+          : rawBody;
+        try {
+          body = JSON.parse(decoded) as StreamBody;
+        } catch {
+          writeSSE(responseStream, 'error', { message: 'Invalid JSON body' });
+          responseStream.end();
+          return;
+        }
+      }
+
+      const bedrock = new BedrockRuntimeClient({});
+      const weightUnit =
+        body.weightUnit === 'KG' ? WeightUnit.KG : WeightUnit.LBS;
+
+      const onProgress = (step: string, message: string) => {
+        writeSSE(responseStream, 'progress', { step, message });
+      };
+
+      if (body.regenerateContext && body.currentExercises) {
+        console.log('[AI stream] regenerate flow', { indices: body.regenerateContext.exerciseIndices.length });
+        const exercises = await runRegenerateFlow(
+          body.currentExercises,
+          body.regenerateContext,
+          bedrock,
+          onProgress
+        );
+        console.log('[AI stream] regenerate complete', { exercisesCount: exercises.length });
+        writeSSE(responseStream, 'complete', { exercises });
+      } else if (body.aiPrompt) {
+        console.log('[AI stream] full flow', { promptLength: body.aiPrompt.length });
+        const exercises = await runFullFlow(
+          userId,
+          body.aiPrompt,
+          weightUnit,
+          bedrock,
+          onProgress
+        );
+        console.log('[AI stream] full flow complete', { exercisesCount: exercises.length });
+        writeSSE(responseStream, 'complete', { exercises });
+      } else {
+        writeSSE(responseStream, 'error', {
+          message: 'Body must include aiPrompt or regenerateContext + currentExercises',
+        });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[AI stream] error', { message, stack: err instanceof Error ? err.stack : undefined });
+      writeSSE(responseStream, 'error', { message });
+    } finally {
+      responseStream.end();
+      console.log('[AI stream] response ended');
+    }
+  }
+);
+

@@ -6,3 +6,4 @@ export * from './auth';
 export * from './goalUtils';
 export * from './goalHelpers';
 export * from './feedFanout';
+export * from './catalogQuery';

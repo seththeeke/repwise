@@ -112,11 +112,17 @@ export class RepwiseStack extends cdk.Stack {
 
     const aiLambda = new NodejsFunction(this, 'AiLambda', {
       entry: path.join(__dirname, '../../lambdas/ai/src/index.ts'),
-      handler: 'handler',
+      handler: 'streamHandler',
       runtime: lambda.Runtime.NODEJS_20_X,
+      timeout: cdk.Duration.seconds(120),
+      bundling: {
+        externalModules: ['@aws-sdk/xml-builder'],
+      },
       environment: {
         WORKOUTS_TABLE: tables.workoutsTable.tableName,
         METRICS_TABLE: tables.metricsTable.tableName,
+        USER_POOL_ID: auth.userPool.userPoolId,
+        COGNITO_CLIENT_ID: auth.userPoolClient.userPoolClientId,
       },
     });
     tables.workoutsTable.grantReadData(aiLambda);
@@ -125,13 +131,20 @@ export class RepwiseStack extends cdk.Stack {
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
         resources: [
-          `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-text-express-v1`,
+          `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-micro-v1:0`,
         ],
       })
     );
 
-    workoutLambda.addEnvironment('AI_LAMBDA_ARN', aiLambda.functionArn);
-    aiLambda.grantInvoke(workoutLambda);
+    const aiFunctionUrl = aiLambda.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      invokeMode: lambda.InvokeMode.RESPONSE_STREAM,
+      cors: {
+        allowedOrigins: ['*'],
+        allowedHeaders: ['Authorization', 'Content-Type'],
+        allowedMethods: [lambda.HttpMethod.POST],
+      },
+    });
 
     const api = new ApiConstruct(this, 'Api', auth.userPool, auth.userPoolClient);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me', userLambda, true);
@@ -165,6 +178,11 @@ export class RepwiseStack extends cdk.Stack {
       value: api.api.apiEndpoint ?? '',
       description: 'API Gateway URL for integration tests (.env.test API_BASE_URL) and frontend',
       exportName: 'RepwiseApiUrl',
+    });
+    new cdk.CfnOutput(this, 'AiWorkoutStreamUrl', {
+      value: aiFunctionUrl.url,
+      description: 'AI workout generation SSE endpoint (POST with aiPrompt or regenerateContext; send Authorization header)',
+      exportName: 'RepwiseAiWorkoutStreamUrl',
     });
   }
 }

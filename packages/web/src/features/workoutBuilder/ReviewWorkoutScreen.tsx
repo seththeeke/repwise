@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Play } from 'lucide-react';
+import { ArrowLeft, Sparkles, Play, RefreshCw } from 'lucide-react';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { useWorkoutSessionStore } from '@/stores/workoutSessionStore';
 import { workoutsApi } from '@/api/workouts';
+import { streamWorkoutRegenerate, type ProgressStep } from '@/api/aiWorkoutStream';
 import { WorkoutSource, PermissionType } from '@/types';
 import { ReviewExerciseRow } from './ReviewExerciseRow';
 import { exercisesApi } from '@/api/exercises';
@@ -20,15 +21,64 @@ export function ReviewWorkoutScreen() {
 
   const [swapIndex, setSwapIndex] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerateProgress, setRegenerateProgress] = useState<ProgressStep | null>(null);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
+  const isAI = draft?.source === WorkoutSource.AI_GENERATED;
   const { data: catalogExercises = [] } = useQuery({
     queryKey: ['exercises'],
     queryFn: () => exercisesApi.list({}),
-    enabled: swapIndex !== null,
+    enabled: swapIndex !== null || isAI,
   });
 
   const exercises = draft?.exercises ?? [];
-  const isAI = draft?.source === WorkoutSource.AI_GENERATED;
+
+  const toggleSelect = (index: number) => {
+    setSelectedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+    setRegenerateError(null);
+  };
+
+  const handleRegenerate = async () => {
+    if (selectedIndices.size === 0 || !draft) return;
+    const catalog = Array.isArray(catalogExercises) ? catalogExercises : [];
+    const indices = Array.from(selectedIndices).sort((a, b) => a - b);
+    const firstIndex = indices[0];
+    const firstExercise = exercises[firstIndex];
+    const catalogItem = catalog.find((c: { exerciseId: string }) => c.exerciseId === firstExercise?.exerciseId);
+    const muscleGroup = (catalogItem as { muscleGroup?: string } | undefined)?.muscleGroup ?? 'full';
+    setRegenerating(true);
+    setRegenerateError(null);
+    setRegenerateProgress(null);
+    await streamWorkoutRegenerate(
+      {
+        exerciseIndices: indices,
+        currentExerciseIds: indices.map((i) => exercises[i].exerciseId),
+        muscleGroup,
+      },
+      exercises,
+      {
+        onProgress: (step) => setRegenerateProgress(step),
+        onComplete: (updated) => {
+          setDraft({ ...draft, exercises: updated });
+          setSelectedIndices(new Set());
+          setRegenerating(false);
+          setRegenerateProgress(null);
+        },
+        onError: (msg) => {
+          setRegenerateError(msg);
+          setRegenerating(false);
+          setRegenerateProgress(null);
+        },
+      }
+    );
+  };
 
   // Don't redirect to builder when we're in the middle of starting (clearDraft causes empty draft before navigate completes)
   if (!draft || exercises.length === 0) {
@@ -97,7 +147,31 @@ export function ReviewWorkoutScreen() {
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-medium">AI Generated Workout</span>
           </div>
-          <p className="text-violet-200 text-sm">Edit sets/reps or remove exercises, then start.</p>
+          <p className="text-violet-200 text-sm">Select exercises to regenerate, or edit/remove, then start.</p>
+          {selectedIndices.size > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                disabled={regenerating}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
+                {regenerating ? (regenerateProgress ? `Regenerating… (${regenerateProgress.replace(/_/g, ' ')})` : 'Regenerating…') : `Regenerate ${selectedIndices.size} selected`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIndices(new Set())}
+                disabled={regenerating}
+                className="text-white/90 hover:text-white text-sm"
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
+          {regenerateError && (
+            <p className="mt-2 text-red-200 text-sm">{regenerateError}</p>
+          )}
         </div>
       )}
 
@@ -107,8 +181,8 @@ export function ReviewWorkoutScreen() {
             key={`${exercise.exerciseId}-${index}`}
             exercise={exercise}
             index={index}
-            selected={false}
-            onToggleSelect={() => {}}
+            selected={selectedIndices.has(index)}
+            onToggleSelect={() => toggleSelect(index)}
             onUpdate={(updates) => updateExerciseInDraft(index, updates)}
             onRemove={() => removeExerciseFromDraft(index)}
             onSwap={() => setSwapIndex(index)}

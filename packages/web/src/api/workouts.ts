@@ -19,7 +19,10 @@ export const workoutsApi = {
   create: (body: { exercises: WorkoutExercise[]; source?: string; permissionType?: string }) =>
     apiClient.post<WorkoutInstance>('/workout-instances', body).then((r) => r.data),
 
-  /** POST with aiPrompt only; returns suggested exercises (no workout created yet). */
+  /**
+   * Legacy: POST with aiPrompt to API Gateway. Backend returns 400; use the AI stream endpoint
+   * (streamWorkoutGeneration in api/aiWorkoutStream.ts) with VITE_AI_WORKOUT_STREAM_URL instead.
+   */
   generateFromPrompt: (aiPrompt: string) =>
     apiClient
       .post<{ suggestedExercises: WorkoutExercise[] }>('/workout-instances', {
