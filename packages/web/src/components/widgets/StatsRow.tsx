@@ -31,8 +31,8 @@ export function StatsRow({
         <p className="text-xs text-gray-500 dark:text-gray-400">Workouts</p>
       </div>
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-        <div className="w-8 h-8 bg-accent-green/10 dark:bg-accent-green/20 rounded-lg flex items-center justify-center mb-2">
-          <Target className="w-4 h-4 text-accent-green" />
+        <div className="w-8 h-8 bg-accent-orange/10 dark:bg-accent-orange/20 rounded-lg flex items-center justify-center mb-2">
+          <Zap className="w-4 h-4 text-accent-orange" />
         </div>
         <p className="text-2xl font-bold text-gray-900 dark:text-white">
           {workoutsThisMonth}
@@ -40,8 +40,8 @@ export function StatsRow({
         <p className="text-xs text-gray-500 dark:text-gray-400">This Month</p>
       </div>
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-        <div className="w-8 h-8 bg-accent-orange/10 dark:bg-accent-orange/20 rounded-lg flex items-center justify-center mb-2">
-          <Zap className="w-4 h-4 text-accent-orange" />
+        <div className="w-8 h-8 bg-accent-green/10 dark:bg-accent-green/20 rounded-lg flex items-center justify-center mb-2">
+          <Target className="w-4 h-4 text-accent-green" />
         </div>
         <p className="text-2xl font-bold text-gray-900 dark:text-white">
           {formatVolume(totalVolumeLast30Days)}
