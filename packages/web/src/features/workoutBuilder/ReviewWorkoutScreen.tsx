@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Play, RefreshCw, GripVertical, Building2 } from 'lucide-react';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
@@ -29,6 +29,9 @@ export function ReviewWorkoutScreen() {
   const [regenerateError, setRegenerateError] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const touchDragRef = useRef<{ index: number; startY: number } | null>(null);
+  const dropIndexRef = useRef<number | null>(null);
+  dropIndexRef.current = dropIndex;
 
   const exercises = draft?.exercises ?? [];
   const isAI = draft?.source === WorkoutSource.AI_GENERATED;
@@ -162,6 +165,47 @@ export function ReviewWorkoutScreen() {
     setDropIndex(null);
   };
 
+  const handleTouchStart = (_e: React.TouchEvent, index: number) => {
+    touchDragRef.current = { index, startY: 0 };
+    setDragIndex(index);
+    setDropIndex(index);
+  };
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!touchDragRef.current || !e.touches[0]) return;
+    const touch = e.touches[0];
+    const els = document.elementsFromPoint(touch.clientX, touch.clientY);
+    for (const el of els) {
+      const rowIndex = el.getAttribute('data-row-index');
+      if (rowIndex != null) {
+        const i = parseInt(rowIndex, 10);
+        if (!Number.isNaN(i)) setDropIndex(i);
+        break;
+      }
+    }
+  }, []);
+  const handleTouchEnd = useCallback(() => {
+    const from = touchDragRef.current?.index;
+    const to = dropIndexRef.current;
+    if (from != null && to != null && from !== to) {
+      reorderExercisesInDraft(from, to);
+    }
+    touchDragRef.current = null;
+    setDragIndex(null);
+    setDropIndex(null);
+  }, [reorderExercisesInDraft]);
+
+  useEffect(() => {
+    if (dragIndex === null) return;
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { once: true });
+    document.addEventListener('touchcancel', handleTouchEnd, { once: true });
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [dragIndex, handleTouchMove, handleTouchEnd]);
+
   const handleChooseSwap = (exerciseId: string, name: string) => {
     if (swapIndex === null) return;
     const ex = Array.isArray(catalogExercises)
@@ -268,6 +312,7 @@ export function ReviewWorkoutScreen() {
         {exercises.map((exercise, index) => (
           <div
             key={`${exercise.exerciseId}-${index}`}
+            data-row-index={index}
             onDragOver={(e) => handleDragOver(e, index)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, index)}
@@ -282,7 +327,8 @@ export function ReviewWorkoutScreen() {
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
-                className="flex items-center justify-center w-8 flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500 touch-none"
+                onTouchStart={(e) => handleTouchStart(e, index)}
+                className="flex items-center justify-center w-10 min-h-[44px] flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500 touch-manipulation"
                 aria-label="Drag to reorder"
               >
                 <GripVertical className="w-5 h-5 pointer-events-none" />

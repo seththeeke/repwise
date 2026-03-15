@@ -96,10 +96,14 @@ export function WorkoutExecutionPage() {
     };
   }, [durationRunning]);
 
-  // Sync weight input when changing exercise
+  // Sync weight input when changing exercise (prefer current weight, then last used)
   useEffect(() => {
     if (currentExercise) {
-      setWeightInput(currentExercise.weight?.toString() ?? '');
+      const value =
+        currentExercise.weight != null
+          ? currentExercise.weight.toString()
+          : (currentExercise.lastUsedWeight?.toString() ?? '');
+      setWeightInput(value);
       setDurationElapsed(0);
       setDurationRunning(false);
     }
@@ -119,17 +123,21 @@ export function WorkoutExecutionPage() {
     setWeightInput(value);
     const num = parseFloat(value);
     if (!Number.isNaN(num)) {
-      updateExercise(currentExerciseIndex, { weight: num, weightUnit: 'LBS' });
+      updateExercise(currentExerciseIndex, { weight: num, weightUnit: 'LBS', skipped: false });
       debouncedPatch();
     }
   };
 
   const handleNext = () => {
     if (currentExercise?.modality === ExerciseModality.SETS_REPS && weightInput) {
-      updateExercise(currentExerciseIndex, {
-        weight: parseFloat(weightInput),
-        weightUnit: 'LBS',
-      });
+      const w = parseFloat(weightInput);
+      if (!Number.isNaN(w)) {
+        updateExercise(currentExerciseIndex, {
+          weight: w,
+          weightUnit: 'LBS',
+          skipped: false,
+        });
+      }
     }
     debouncedPatch();
     if (isLast) setShowCompleteConfirm(true);
@@ -315,32 +323,40 @@ export function WorkoutExecutionPage() {
         onConfirm={handleCancel}
       />
 
-      {showCompleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-sm">
-            <h2 className="text-xl font-bold mb-2">Complete Workout?</h2>
-            <p className="text-gray-400 mb-6">
-              You've completed all {totalExercises} exercises in {formatTime(elapsedSeconds)}.
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowCompleteConfirm(false)}
-                className="flex-1 py-3 rounded-xl bg-gray-700 font-semibold hover:bg-gray-600 transition-colors"
-              >
-                Review
-              </button>
-              <button
-                type="button"
-                onClick={handleComplete}
-                className="flex-1 py-3 rounded-xl bg-accent-green font-semibold hover:opacity-90 transition-opacity"
-              >
-                Complete
-              </button>
+      {showCompleteConfirm && (() => {
+        const skippedCount = exercises.filter((e) => e.skipped).length;
+        return (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-2">Complete Workout?</h2>
+              <p className="text-gray-400 mb-2">
+                You've completed all {totalExercises} exercises in {formatTime(elapsedSeconds)}.
+              </p>
+              {skippedCount > 0 && (
+                <p className="text-amber-400 text-sm mb-4">
+                  {skippedCount} exercise{skippedCount !== 1 ? 's' : ''} {skippedCount !== 1 ? 'are' : 'is'} marked as skipped. Tap Review to fill them out, or complete anyway.
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCompleteConfirm(false)}
+                  className="flex-1 py-3 rounded-xl bg-gray-700 font-semibold hover:bg-gray-600 transition-colors"
+                >
+                  Review
+                </button>
+                <button
+                  type="button"
+                  onClick={handleComplete}
+                  className="flex-1 py-3 rounded-xl bg-accent-green font-semibold hover:opacity-90 transition-opacity"
+                >
+                  {skippedCount > 0 ? 'Complete anyway' : 'Complete'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

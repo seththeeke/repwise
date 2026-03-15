@@ -23,6 +23,7 @@ import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import LoginDialog from './components/LoginDialog';
 import { usersApi } from './api/users';
 import { useAuthStore } from './stores/authStore';
+import { Dumbbell } from 'lucide-react';
 
 function ConfigRequired() {
   return (
@@ -107,8 +108,8 @@ function App() {
 
   if (!authChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary to-primary-dark">
+        <Dumbbell className="w-14 h-14 text-white animate-spin" aria-label="Loading" />
       </div>
     );
   }

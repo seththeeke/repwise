@@ -30,9 +30,9 @@ export function NewWorkoutScreen() {
         </h1>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
+      <div className="flex-1 flex flex-col items-center pt-6 px-6 pb-8">
         {gyms.length > 0 && (
-          <div className="relative inline-flex items-center justify-center mb-4">
+          <div className="relative inline-flex items-center justify-center mb-3">
             <select
               value={selectedGymId ?? defaultGymId ?? gyms[0]?.gymId ?? ''}
               onChange={(e) => setSelectedGymId(e.target.value || null)}
@@ -49,10 +49,10 @@ export function NewWorkoutScreen() {
           </div>
         )}
 
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
           Create Workout
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-8 text-center">
+        <p className="text-gray-500 dark:text-gray-400 mb-5 text-center">
           How would you like to build your workout?
         </p>
 

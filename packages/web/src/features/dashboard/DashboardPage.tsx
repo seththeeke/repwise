@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Dumbbell } from 'lucide-react';
 
 const FAB_GUIDED_KEY = 'workout_fab_guided';
 import { useDashboardData } from './hooks/useDashboardData';
@@ -13,7 +13,6 @@ import { WeekCalendarWidget } from '@/components/widgets/WeekCalendarWidget';
 import { GoalsWidget } from '@/components/widgets/GoalsWidget';
 import { RecentWorkoutsWidget } from '@/components/widgets/RecentWorkoutsWidget';
 import { ActivityFeedWidget } from '@/components/widgets/ActivityFeedWidget';
-import { Spinner } from '@/components/ui/Spinner';
 import { ToastContainer } from '@/components/ui/Toast';
 
 interface DashboardPageProps {
@@ -51,8 +50,8 @@ export function DashboardPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Spinner />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary to-primary-dark">
+        <Dumbbell className="w-14 h-14 text-white animate-spin" aria-label="Loading" />
       </div>
     );
   }
