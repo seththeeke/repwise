@@ -9,6 +9,7 @@ import { Construct } from 'constructs';
 import { ApiConstruct } from './api';
 import { AuthConstruct } from './auth';
 import { TablesConstruct } from './tables';
+import { WebsiteConstruct } from './website';
 
 /**
  * Repwise stack. Tables, auth, API, and Lambdas per specs/backend-spec.md.
@@ -211,6 +212,18 @@ export class RepwiseStack extends cdk.Stack {
       value: aiFunctionUrl.url,
       description: 'AI workout generation SSE endpoint (POST with aiPrompt or regenerateContext; send Authorization header)',
       exportName: 'RepwiseAiWorkoutStreamUrl',
+    });
+
+    const website = new WebsiteConstruct(this, 'Website');
+    new cdk.CfnOutput(this, 'WebsiteUrl', {
+      value: website.url,
+      description: 'Frontend app URL (CloudFront). Set VITE_API_BASE_URL, VITE_COGNITO_*, VITE_AI_WORKOUT_STREAM_URL in .env.production before building web.',
+      exportName: 'RepwiseWebsiteUrl',
+    });
+    new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
+      value: website.distribution.distributionId,
+      description: 'CloudFront distribution ID for cache invalidation',
+      exportName: 'RepwiseCloudFrontDistributionId',
     });
   }
 }
