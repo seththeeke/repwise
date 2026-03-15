@@ -16,8 +16,13 @@ interface PatchWorkoutBody {
 }
 
 export const workoutsApi = {
-  create: (body: { exercises: WorkoutExercise[]; source?: string; permissionType?: string }) =>
-    apiClient.post<WorkoutInstance>('/workout-instances', body).then((r) => r.data),
+  create: (body: {
+    exercises: WorkoutExercise[];
+    source?: string;
+    permissionType?: string;
+    gymId?: string;
+    gymName?: string;
+  }) => apiClient.post<WorkoutInstance>('/workout-instances', body).then((r) => r.data),
 
   /**
    * Legacy: POST with aiPrompt to API Gateway. Backend returns 400; use the AI stream endpoint

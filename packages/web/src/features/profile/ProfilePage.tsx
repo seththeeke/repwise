@@ -9,6 +9,7 @@ import { StreakWidget } from '@/components/widgets/StreakWidget';
 import { PersonalRecordsWidget } from '@/components/widgets/PersonalRecordsWidget';
 import { WeekCalendarWidget } from '@/components/widgets/WeekCalendarWidget';
 import { RecentWorkoutsWidget } from '@/components/widgets/RecentWorkoutsWidget';
+import { GymsSection } from './GymsSection';
 import { Spinner } from '@/components/ui/Spinner';
 import { Flame, Trophy, Calendar, Plus } from 'lucide-react';
 
@@ -107,6 +108,8 @@ export function ProfilePage({ onLogout }: ProfilePageProps) {
         ) : null}
 
         {/* Member since */}
+        <GymsSection />
+
         {memberSince ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mt-3 flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">

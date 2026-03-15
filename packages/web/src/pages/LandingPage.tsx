@@ -13,7 +13,7 @@ export default function LandingPage({ onOpenLogin }: LandingPageProps) {
             <Dumbbell className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold text-gray-900 dark:text-white">
-            Workout Journal
+            Repwise
           </span>
         </div>
         <button
@@ -46,7 +46,7 @@ export default function LandingPage({ onOpenLogin }: LandingPageProps) {
       </main>
 
       <footer className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        My Workout Journal
+        Repwise
       </footer>
     </div>
   );

@@ -11,6 +11,16 @@ import {
   GoalStatus,
 } from './enums';
 
+/** User-owned gym: name + equipment types for filtering exercises. */
+export interface Gym {
+  PK: string;   // USER#<userId>
+  SK: string;   // GYM#<gymId>
+  gymId: string;
+  userId: string;
+  name: string;
+  equipmentTypes: string[]; // e.g. dumbbells, free_weights, cables, weight_rack, cardio, machines
+}
+
 export interface UserProfile {
   PK: string;
   SK: string;
@@ -23,6 +33,8 @@ export interface UserProfile {
   isPrivate: boolean;
   weightUnit: WeightUnit;
   defaultPermissionType: PermissionType;
+  defaultGymId?: string;
+  onboardingCompletedAt?: string;
   createdAt: string;
   followersCount: number;
   followingCount: number;
@@ -110,6 +122,8 @@ export interface WorkoutInstance {
   durationMinutes?: number;
   totalVolume?: number;
   notes?: string;
+  gymId?: string;
+  gymName?: string;
   exercises: WorkoutExercise[];
 }
 

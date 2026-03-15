@@ -47,6 +47,8 @@ function toResponse(wi: WorkoutInstance): Record<string, unknown> {
     durationMinutes: wi.durationMinutes,
     totalVolume: wi.totalVolume,
     notes: wi.notes,
+    gymId: wi.gymId,
+    gymName: wi.gymName,
     exercises: wi.exercises,
   };
 }
@@ -128,6 +130,8 @@ export const handler = async (
         permissionType?: string;
         exercises?: WorkoutExercise[];
         aiPrompt?: unknown;
+        gymId?: string;
+        gymName?: string;
       }>(event.body ?? null);
       if (body?.aiPrompt !== undefined && body?.aiPrompt !== null) {
         return res.badRequest(
@@ -150,6 +154,8 @@ export const handler = async (
         source,
         permissionType,
         startedAt: now,
+        ...(body.gymId != null && { gymId: body.gymId }),
+        ...(body.gymName != null && { gymName: body.gymName }),
         exercises: exercises.map((e, i) => ({
           ...e,
           orderIndex: e.orderIndex ?? i,

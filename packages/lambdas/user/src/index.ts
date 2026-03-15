@@ -16,6 +16,8 @@ function toMeProfile(p: UserProfile): Record<string, unknown> {
     isPrivate: p.isPrivate,
     weightUnit: p.weightUnit,
     defaultPermissionType: p.defaultPermissionType,
+    defaultGymId: p.defaultGymId,
+    onboardingCompletedAt: p.onboardingCompletedAt,
     followersCount: p.followersCount,
     followingCount: p.followingCount,
     streakCount: p.streakCount,
@@ -91,7 +93,7 @@ export const handler = async (
       } catch {
         return res.badRequest('Invalid JSON body');
       }
-      const allowed = ['displayName', 'bio', 'weightUnit', 'profilePhoto'];
+      const allowed = ['displayName', 'bio', 'weightUnit', 'profilePhoto', 'defaultGymId', 'onboardingCompletedAt'];
       const updates: Record<string, unknown> = {};
       for (const k of allowed) {
         if (body[k] !== undefined) updates[k] = body[k];

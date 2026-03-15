@@ -19,6 +19,7 @@ import { ExerciseMetricsPage } from './features/metrics/ExerciseMetricsPage';
 import { ExerciseMetricsDetailPage } from './features/metrics/ExerciseMetricsDetailPage';
 import { WorkoutDetailPage } from './features/workout/WorkoutDetailPage';
 import { WorkoutsHistoryPage } from './features/workout/WorkoutsHistoryPage';
+import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import LoginDialog from './components/LoginDialog';
 import { usersApi } from './api/users';
 import { useAuthStore } from './stores/authStore';
@@ -122,6 +123,29 @@ function App() {
           onSuccess={loadUser}
         />
       </>
+    );
+  }
+
+  // Dev: force onboarding via ?showOnboarding=1 (ignores profile.onboardingCompletedAt)
+  const forceOnboarding =
+    import.meta.env.DEV &&
+    (new URLSearchParams(window.location.search).get('showOnboarding') === '1' ||
+      window.localStorage.getItem('repwise_force_onboarding') === '1');
+  const showOnboarding =
+    forceOnboarding || (profile != null && profile.onboardingCompletedAt == null);
+
+  if (showOnboarding) {
+    return (
+      <OnboardingFlow
+        onComplete={async () => {
+          if (forceOnboarding) {
+            window.localStorage.removeItem('repwise_force_onboarding');
+            window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+          }
+          const p = await usersApi.getMe();
+          setProfile(p);
+        }}
+      />
     );
   }
 

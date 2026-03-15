@@ -42,6 +42,29 @@ export class RepwiseStack extends cdk.Stack {
     });
     tables.usersTable.grantReadWriteData(userLambda);
 
+    const gymsLambda = new NodejsFunction(this, 'GymsLambda', {
+      entry: path.join(__dirname, '../../lambdas/gyms/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: { USERS_TABLE: tables.usersTable.tableName },
+    });
+    tables.usersTable.grantReadWriteData(gymsLambda);
+
+    const goalsAiLambda = new NodejsFunction(this, 'GoalsAiLambda', {
+      entry: path.join(__dirname, '../../lambdas/goals-ai/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: {},
+    });
+    goalsAiLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['bedrock:InvokeModel'],
+        resources: [
+          `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-micro-v1:0`,
+        ],
+      })
+    );
+
     const exerciseLambda = new NodejsFunction(this, 'ExerciseLambda', {
       entry: path.join(__dirname, '../../lambdas/exercise/src/index.ts'),
       handler: 'handler',
@@ -149,6 +172,10 @@ export class RepwiseStack extends cdk.Stack {
     const api = new ApiConstruct(this, 'Api', auth.userPool, auth.userPoolClient);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me', userLambda, true);
     api.addRoute(apigwv2.HttpMethod.PATCH, '/users/me', userLambda, true);
+    api.addRoute(apigwv2.HttpMethod.GET, '/users/me/gyms', gymsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.POST, '/users/me/gyms', gymsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.PATCH, '/users/me/gyms/{gymId}', gymsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.DELETE, '/users/me/gyms/{gymId}', gymsLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/{username}', userLambda, false);
     api.addRoute(apigwv2.HttpMethod.GET, '/exercises', exerciseLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/exercises/{exerciseId}', exerciseLambda, true);
@@ -161,6 +188,7 @@ export class RepwiseStack extends cdk.Stack {
     api.addRoute(apigwv2.HttpMethod.GET, '/metrics/me/exercises/{exerciseId}', metricsLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/goals/me', goalsLambda, true);
     api.addRoute(apigwv2.HttpMethod.POST, '/goals/me', goalsLambda, true);
+    api.addRoute(apigwv2.HttpMethod.POST, '/goals/me/suggest', goalsAiLambda, true);
     api.addRoute(apigwv2.HttpMethod.DELETE, '/goals/me/{goalId}', goalsLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/feed', feedLambda, true);
 

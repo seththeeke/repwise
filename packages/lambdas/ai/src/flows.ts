@@ -196,7 +196,8 @@ export async function runFullFlow(
   userPrompt: string,
   weightUnit: WeightUnit,
   bedrock: BedrockRuntimeClient,
-  onProgress: (step: string, message: string) => void
+  onProgress: (step: string, message: string) => void,
+  equipmentTypes?: string[]
 ): Promise<WorkoutExercise[]> {
   onProgress('analyzing_goals', 'Analyzing your fitness goals...');
   const intent = await getIntentFromPrompt(userPrompt, bedrock);
@@ -212,11 +213,12 @@ export async function runFullFlow(
     intent.muscleGroups?.length ? intent.muscleGroups : undefined;
   const candidates = await queryCatalog({
     muscleGroups,
+    equipmentTypes,
     limit: 50,
   });
-  console.log('[AI flow] catalog', { candidatesCount: candidates.length, muscleGroups });
+  console.log('[AI flow] catalog', { candidatesCount: candidates.length, muscleGroups, equipmentTypes: equipmentTypes?.length });
   if (candidates.length === 0) {
-    const fallback = await queryCatalog({ limit: 50 });
+    const fallback = await queryCatalog({ limit: 50, equipmentTypes });
     if (fallback.length === 0) throw new Error('No exercises in catalog');
     console.log('[AI flow] using fallback catalog', { count: fallback.length });
     return selectExercises(

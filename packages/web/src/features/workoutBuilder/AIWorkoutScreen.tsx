@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Wand2, Sparkles, Check } from 'lucide-react';
 import {
   streamWorkoutGeneration,
   AI_PROGRESS_STEPS,
   type ProgressStep,
 } from '@/api/aiWorkoutStream';
+import { gymsApi } from '@/api/gyms';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { QuickPromptChips } from './QuickPromptChips';
 import { WorkoutSource, PermissionType } from '@/types';
@@ -14,13 +16,28 @@ const DEFAULT_SETS = 3;
 const DEFAULT_REPS = 8;
 const DEFAULT_DURATION = 60;
 
+type LocationGym = { gymId: string; name: string; equipmentTypes: string[] };
+
 export function AIWorkoutScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setDraft = useWorkoutDraftStore((s) => s.setDraft);
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progressStep, setProgressStep] = useState<ProgressStep | null>(null);
+
+  const { data: gymsData } = useQuery({
+    queryKey: ['gyms'],
+    queryFn: () => gymsApi.list(),
+  });
+  const gyms = gymsData?.gyms ?? [];
+  const defaultGymId = gymsData?.defaultGymId ?? null;
+  const gymFromState = (location.state as { gym?: LocationGym } | null)?.gym;
+  const defaultGym =
+    gymFromState
+      ? { gymId: gymFromState.gymId, name: gymFromState.name, equipmentTypes: gymFromState.equipmentTypes ?? [] }
+      : gyms.find((g) => g.gymId === defaultGymId) ?? gyms[0];
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -52,6 +69,9 @@ export function AIWorkoutScreen() {
               source: WorkoutSource.AI_GENERATED,
               permissionType: PermissionType.FOLLOWERS_ONLY,
               aiPrompt: prompt.trim(),
+              selectedGym: defaultGym
+                ? { gymId: defaultGym.gymId, name: defaultGym.name, equipmentTypes: defaultGym.equipmentTypes ?? [] }
+                : null,
             });
             setLoading(false);
             setProgressStep(null);
@@ -63,7 +83,7 @@ export function AIWorkoutScreen() {
             setProgressStep(null);
           },
         },
-        undefined
+        { equipmentTypes: defaultGym?.equipmentTypes }
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start generation.');

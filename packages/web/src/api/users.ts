@@ -14,6 +14,8 @@ export const usersApi = {
         | 'weightUnit'
         | 'defaultPermissionType'
         | 'isPrivate'
+        | 'defaultGymId'
+        | 'onboardingCompletedAt'
       >
     >
   ) => apiClient.patch<UserProfile>('/users/me', updates).then((r) => r.data),

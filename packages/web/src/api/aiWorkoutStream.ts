@@ -68,13 +68,14 @@ function parseSSE(buffer: string): Array<{ event: string; data: string }> {
 export async function streamWorkoutGeneration(
   aiPrompt: string,
   callbacks: StreamCallbacks,
-  options?: { weightUnit?: 'LBS' | 'KG' }
+  options?: { weightUnit?: 'LBS' | 'KG'; equipmentTypes?: string[] }
 ): Promise<void> {
   const url = getStreamUrl();
   const token = await getAuthToken();
   const body = JSON.stringify({
     aiPrompt: aiPrompt.trim(),
     weightUnit: options?.weightUnit,
+    equipmentTypes: options?.equipmentTypes,
   });
   const res = await fetch(url, {
     method: 'POST',

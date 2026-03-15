@@ -7,11 +7,18 @@ export interface ToastMessage {
   message: string;
 }
 
+export interface SelectedGym {
+  gymId: string;
+  name: string;
+  equipmentTypes: string[];
+}
+
 export interface WorkoutDraft {
   exercises: WorkoutExercise[];
   source: WorkoutSource;
   permissionType: PermissionType;
   aiPrompt?: string;
+  selectedGym?: SelectedGym | null;
 }
 
 export interface ExerciseFilterState {

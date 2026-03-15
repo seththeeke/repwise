@@ -38,6 +38,8 @@ export interface StreamBody {
   /** Full current exercises when using regenerateContext (to merge replacements). */
   currentExercises?: WorkoutExercise[];
   weightUnit?: 'LBS' | 'KG';
+  /** Gym equipment types to filter exercise catalog (e.g. from selected gym). */
+  equipmentTypes?: string[];
 }
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
@@ -126,13 +128,14 @@ export const streamHandler = awslambda.streamifyResponse(
         console.log('[AI stream] regenerate complete', { exercisesCount: exercises.length });
         writeSSE(responseStream, 'complete', { exercises });
       } else if (body.aiPrompt) {
-        console.log('[AI stream] full flow', { promptLength: body.aiPrompt.length });
+        console.log('[AI stream] full flow', { promptLength: body.aiPrompt.length, equipmentTypes: body.equipmentTypes?.length });
         const exercises = await runFullFlow(
           userId,
           body.aiPrompt,
           weightUnit,
           bedrock,
-          onProgress
+          onProgress,
+          body.equipmentTypes
         );
         console.log('[AI stream] full flow complete', { exercisesCount: exercises.length });
         writeSSE(responseStream, 'complete', { exercises });

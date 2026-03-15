@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Play, RefreshCw, GripVertical } from 'lucide-react';
+import { ArrowLeft, Sparkles, Play, RefreshCw, GripVertical, Building2 } from 'lucide-react';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { useWorkoutSessionStore } from '@/stores/workoutSessionStore';
 import { workoutsApi } from '@/api/workouts';
+import { gymsApi } from '@/api/gyms';
 import { streamWorkoutRegenerate, type ProgressStep } from '@/api/aiWorkoutStream';
 import { WorkoutSource, PermissionType } from '@/types';
 import { ReviewExerciseRow } from './ReviewExerciseRow';
@@ -29,14 +30,36 @@ export function ReviewWorkoutScreen() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
+  const exercises = draft?.exercises ?? [];
   const isAI = draft?.source === WorkoutSource.AI_GENERATED;
   const { data: catalogExercises = [] } = useQuery({
     queryKey: ['exercises'],
     queryFn: () => exercisesApi.list({}),
     enabled: swapIndex !== null || isAI,
   });
+  const { data: gymsData } = useQuery({
+    queryKey: ['gyms'],
+    queryFn: () => gymsApi.list(),
+    enabled: !!draft && exercises.length > 0,
+  });
+  const gyms = gymsData?.gyms ?? [];
+  const defaultGymId = gymsData?.defaultGymId ?? null;
 
-  const exercises = draft?.exercises ?? [];
+  useEffect(() => {
+    if (!draft || gyms.length === 0) return;
+    if (draft.selectedGym != null) return;
+    const defaultGym = gyms.find((g) => g.gymId === defaultGymId) ?? gyms[0];
+    if (defaultGym) {
+      setDraft({
+        ...draft,
+        selectedGym: {
+          gymId: defaultGym.gymId,
+          name: defaultGym.name,
+          equipmentTypes: defaultGym.equipmentTypes ?? [],
+        },
+      });
+    }
+  }, [draft, gyms, defaultGymId, setDraft]);
 
   const toggleSelect = (index: number) => {
     setSelectedIndices((prev) => {
@@ -100,6 +123,7 @@ export function ReviewWorkoutScreen() {
         exercises,
         source: draft.source === WorkoutSource.AI_GENERATED ? WorkoutSource.AI_GENERATED : WorkoutSource.MANUAL,
         permissionType: draft.permissionType ?? PermissionType.FOLLOWERS_ONLY,
+        ...(draft.selectedGym && { gymId: draft.selectedGym.gymId, gymName: draft.selectedGym.name }),
       });
       startSession(created.workoutInstanceId, created.exercises);
       clearDraft();
@@ -172,6 +196,39 @@ export function ReviewWorkoutScreen() {
         </button>
         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Review Workout</h1>
       </div>
+
+      {gyms.length > 0 && (
+        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center gap-2">
+          <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <label htmlFor="gym-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Gym
+          </label>
+          <select
+            id="gym-select"
+            value={draft?.selectedGym?.gymId ?? ''}
+            onChange={(e) => {
+              const gym = gyms.find((g) => g.gymId === e.target.value);
+              if (gym && draft) {
+                setDraft({
+                  ...draft,
+                  selectedGym: {
+                    gymId: gym.gymId,
+                    name: gym.name,
+                    equipmentTypes: gym.equipmentTypes ?? [],
+                  },
+                });
+              }
+            }}
+            className="flex-1 min-w-0 py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+          >
+            {gyms.map((g) => (
+              <option key={g.gymId} value={g.gymId}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {isAI && (
         <div className="p-4 bg-gradient-to-r from-primary to-primary-dark">
