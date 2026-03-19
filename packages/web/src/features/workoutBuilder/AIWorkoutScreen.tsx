@@ -44,6 +44,7 @@ export function AIWorkoutScreen() {
     setError(null);
     setLoading(true);
     setProgressStep(null);
+    const builderSessionId = crypto.randomUUID();
     try {
       await streamWorkoutGeneration(
         prompt.trim(),
@@ -69,6 +70,7 @@ export function AIWorkoutScreen() {
               source: WorkoutSource.AI_GENERATED,
               permissionType: PermissionType.FOLLOWERS_ONLY,
               aiPrompt: prompt.trim(),
+              builderSessionId,
               selectedGym: defaultGym
                 ? { gymId: defaultGym.gymId, name: defaultGym.name, equipmentTypes: defaultGym.equipmentTypes ?? [] }
                 : null,
@@ -83,7 +85,7 @@ export function AIWorkoutScreen() {
             setProgressStep(null);
           },
         },
-        { equipmentTypes: defaultGym?.equipmentTypes }
+        { equipmentTypes: defaultGym?.equipmentTypes, builderSessionId }
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start generation.');

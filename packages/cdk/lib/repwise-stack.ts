@@ -145,12 +145,16 @@ export class RepwiseStack extends cdk.Stack {
       environment: {
         WORKOUTS_TABLE: tables.workoutsTable.tableName,
         METRICS_TABLE: tables.metricsTable.tableName,
+        BUILDER_SESSIONS_TABLE: tables.builderSessionsTable.tableName,
+        BUILDER_AI_CONFIG_TABLE: tables.builderAiConfigTable.tableName,
         USER_POOL_ID: auth.userPool.userPoolId,
         COGNITO_CLIENT_ID: auth.userPoolClient.userPoolClientId,
       },
     });
     tables.workoutsTable.grantReadData(aiLambda);
     tables.metricsTable.grantReadData(aiLambda);
+    tables.builderSessionsTable.grantReadWriteData(aiLambda);
+    tables.builderAiConfigTable.grantReadData(aiLambda);
     aiLambda.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
@@ -169,6 +173,22 @@ export class RepwiseStack extends cdk.Stack {
         allowedMethods: [lambda.HttpMethod.POST],
       },
     });
+
+    const builderAiConfigLambda = new NodejsFunction(
+      this,
+      'BuilderAiConfigLambda',
+      {
+        entry: path.join(__dirname, '../../lambdas/ai/src/index.ts'),
+        handler: 'builderAiConfigHandler',
+        runtime: lambda.Runtime.NODEJS_20_X,
+        environment: {
+          BUILDER_AI_CONFIG_TABLE: tables.builderAiConfigTable.tableName,
+          USER_POOL_ID: auth.userPool.userPoolId,
+          COGNITO_CLIENT_ID: auth.userPoolClient.userPoolClientId,
+        },
+      }
+    );
+    tables.builderAiConfigTable.grantReadWriteData(builderAiConfigLambda);
 
     const api = new ApiConstruct(this, 'Api', auth.userPool, auth.userPoolClient);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me', userLambda, true);
@@ -191,6 +211,18 @@ export class RepwiseStack extends cdk.Stack {
     api.addRoute(apigwv2.HttpMethod.POST, '/goals/me', goalsLambda, true);
     api.addRoute(apigwv2.HttpMethod.POST, '/goals/me/suggest', goalsAiLambda, true);
     api.addRoute(apigwv2.HttpMethod.DELETE, '/goals/me/{goalId}', goalsLambda, true);
+    api.addRoute(
+      apigwv2.HttpMethod.GET,
+      '/admin/builder-ai-config',
+      builderAiConfigLambda,
+      true
+    );
+    api.addRoute(
+      apigwv2.HttpMethod.PUT,
+      '/admin/builder-ai-config',
+      builderAiConfigLambda,
+      true
+    );
     api.addRoute(apigwv2.HttpMethod.GET, '/feed', feedLambda, true);
 
     new cdk.CfnOutput(this, 'UserPoolId', {

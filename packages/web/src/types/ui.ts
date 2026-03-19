@@ -18,6 +18,8 @@ export interface WorkoutDraft {
   source: WorkoutSource;
   permissionType: PermissionType;
   aiPrompt?: string;
+  /** Optional builder session id for persisting AI constraints across regenerate attempts. */
+  builderSessionId?: string;
   selectedGym?: SelectedGym | null;
 }
 

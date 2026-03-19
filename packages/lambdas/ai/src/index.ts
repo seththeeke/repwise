@@ -1,11 +1,15 @@
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
+import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import {
   runFullFlow,
   runRegenerateFlow,
+  DEFAULT_BUILDER_AI_CONFIG,
   type RegenerateContext,
 } from './flows';
+import { BUILDER_AI_CONFIG_TABLE, ddb, WeightUnit } from '@repwise/shared';
 import type { WorkoutExercise } from '@repwise/shared';
-import { WeightUnit } from '@repwise/shared';
+import * as res from '@repwise/shared';
 
 interface LambdaResponseStream {
   write(chunk: string): void;
@@ -37,6 +41,8 @@ export interface StreamBody {
   regenerateContext?: RegenerateContext;
   /** Full current exercises when using regenerateContext (to merge replacements). */
   currentExercises?: WorkoutExercise[];
+  /** Optional session id to persist builder constraints across regenerate attempts. */
+  builderSessionId?: string;
   weightUnit?: 'LBS' | 'KG';
   /** Gym equipment types to filter exercise catalog (e.g. from selected gym). */
   equipmentTypes?: string[];
@@ -122,6 +128,8 @@ export const streamHandler = awslambda.streamifyResponse(
         const exercises = await runRegenerateFlow(
           body.currentExercises,
           body.regenerateContext,
+          userId,
+          body.builderSessionId,
           bedrock,
           onProgress
         );
@@ -135,7 +143,8 @@ export const streamHandler = awslambda.streamifyResponse(
           weightUnit,
           bedrock,
           onProgress,
-          body.equipmentTypes
+          body.equipmentTypes,
+          body.builderSessionId
         );
         console.log('[AI stream] full flow complete', { exercisesCount: exercises.length });
         writeSSE(responseStream, 'complete', { exercises });
@@ -154,4 +163,145 @@ export const streamHandler = awslambda.streamifyResponse(
     }
   }
 );
+
+function parseBody<T>(body: string | null): T | null {
+  if (!body) return null;
+  try {
+    return JSON.parse(body) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function getUserGroupsFromAuthHeader(
+  event: APIGatewayProxyEventV2WithJWTAuthorizer
+): Promise<string[]> {
+  const auth =
+    event.headers?.authorization ||
+    event.headers?.Authorization ||
+    '';
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return [];
+
+  const { CognitoJwtVerifier } = await import('aws-jwt-verify');
+  const USER_POOL_ID = process.env.USER_POOL_ID!;
+  const CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
+
+  const verifier = CognitoJwtVerifier.create({
+    userPoolId: USER_POOL_ID,
+    tokenUse: 'id',
+    clientId: CLIENT_ID,
+  });
+
+  const payload = await verifier.verify(token);
+  const raw = (payload as any)['cognito:groups'];
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map((g) => String(g));
+  return [String(raw)];
+}
+
+const BUILDER_AI_CONFIG_PK = 'BUILDER_AI_CONFIG';
+const BUILDER_AI_CONFIG_SK = 'GLOBAL';
+
+/**
+ * Admin: GET/PUT /admin/builder-ai-config
+ * Requires Cognito JWT group `builder-admin`.
+ */
+export const builderAiConfigHandler = async (
+  event: APIGatewayProxyEventV2WithJWTAuthorizer
+): Promise<APIGatewayProxyResultV2> => {
+  const method = event.requestContext.http.method;
+
+  const groups = await getUserGroupsFromAuthHeader(event);
+  if (!groups.includes('builder-admin')) return res.forbidden();
+
+  try {
+    if (method === 'GET') {
+      const out = await ddb.send(
+        new GetCommand({
+          TableName: BUILDER_AI_CONFIG_TABLE,
+          Key: { PK: BUILDER_AI_CONFIG_PK, SK: BUILDER_AI_CONFIG_SK },
+        })
+      );
+      const item = out.Item as Partial<typeof DEFAULT_BUILDER_AI_CONFIG> | undefined;
+      return res.ok({
+        bedrockModelId: item?.bedrockModelId ?? DEFAULT_BUILDER_AI_CONFIG.bedrockModelId,
+          estimatedPricePerRequest:
+            item?.estimatedPricePerRequest ??
+            DEFAULT_BUILDER_AI_CONFIG.estimatedPricePerRequest,
+        intentPromptTemplate:
+          item?.intentPromptTemplate ?? DEFAULT_BUILDER_AI_CONFIG.intentPromptTemplate,
+        selectExercisesPromptTemplate:
+          item?.selectExercisesPromptTemplate ?? DEFAULT_BUILDER_AI_CONFIG.selectExercisesPromptTemplate,
+        regeneratePromptTemplate:
+          item?.regeneratePromptTemplate ?? DEFAULT_BUILDER_AI_CONFIG.regeneratePromptTemplate,
+      });
+    }
+
+    if (method === 'PUT') {
+      const body = parseBody<Partial<{
+        bedrockModelId: string;
+          estimatedPricePerRequest: string;
+        intentPromptTemplate: string;
+        selectExercisesPromptTemplate: string;
+        regeneratePromptTemplate: string;
+      }>>(event.body ?? null);
+
+      if (!body) return res.badRequest('Invalid JSON body');
+
+      const current = await ddb.send(
+        new GetCommand({
+          TableName: BUILDER_AI_CONFIG_TABLE,
+          Key: { PK: BUILDER_AI_CONFIG_PK, SK: BUILDER_AI_CONFIG_SK },
+        })
+      );
+      const currentItem = (current.Item ?? {}) as Record<string, unknown>;
+
+      const merged = {
+        bedrockModelId:
+          typeof body.bedrockModelId === 'string'
+            ? body.bedrockModelId
+            : (currentItem.bedrockModelId as string | undefined) ??
+              DEFAULT_BUILDER_AI_CONFIG.bedrockModelId,
+        estimatedPricePerRequest:
+          typeof body.estimatedPricePerRequest === 'string'
+            ? body.estimatedPricePerRequest
+            : (currentItem.estimatedPricePerRequest as string | undefined) ??
+              DEFAULT_BUILDER_AI_CONFIG.estimatedPricePerRequest,
+        intentPromptTemplate:
+          typeof body.intentPromptTemplate === 'string'
+            ? body.intentPromptTemplate
+            : (currentItem.intentPromptTemplate as string | undefined) ??
+              DEFAULT_BUILDER_AI_CONFIG.intentPromptTemplate,
+        selectExercisesPromptTemplate:
+          typeof body.selectExercisesPromptTemplate === 'string'
+            ? body.selectExercisesPromptTemplate
+            : (currentItem.selectExercisesPromptTemplate as string | undefined) ??
+              DEFAULT_BUILDER_AI_CONFIG.selectExercisesPromptTemplate,
+        regeneratePromptTemplate:
+          typeof body.regeneratePromptTemplate === 'string'
+            ? body.regeneratePromptTemplate
+            : (currentItem.regeneratePromptTemplate as string | undefined) ??
+              DEFAULT_BUILDER_AI_CONFIG.regeneratePromptTemplate,
+      };
+
+      await ddb.send(
+        new PutCommand({
+          TableName: BUILDER_AI_CONFIG_TABLE,
+          Item: {
+            PK: BUILDER_AI_CONFIG_PK,
+            SK: BUILDER_AI_CONFIG_SK,
+            ...merged,
+          } as Record<string, unknown>,
+        })
+      );
+
+      return res.ok(merged);
+    }
+
+    return res.badRequest('Method not supported');
+  } catch (err) {
+    return res.serverError(err);
+  }
+};
 

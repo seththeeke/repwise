@@ -14,6 +14,7 @@ import { GoalsWidget } from '@/components/widgets/GoalsWidget';
 import { RecentWorkoutsWidget } from '@/components/widgets/RecentWorkoutsWidget';
 import { ActivityFeedWidget } from '@/components/widgets/ActivityFeedWidget';
 import { ToastContainer } from '@/components/ui/Toast';
+import { AdminFloatingButton } from '../admin/AdminFloatingButton';
 
 interface DashboardPageProps {
   displayName: string;
@@ -164,6 +165,9 @@ export function DashboardPage({
       >
         <Plus className="w-8 h-8 text-white" />
       </button>
+
+      {/* Floating Admin navigation */}
+      <AdminFloatingButton className="left-6 bottom-6" />
 
       {/* One-time coach mark for FAB */}
       {showFabCoachMark && (

@@ -10,3 +10,7 @@ export const ddb = DynamoDBDocumentClient.from(client, {
 export const USERS_TABLE = process.env.USERS_TABLE!;
 export const WORKOUTS_TABLE = process.env.WORKOUTS_TABLE!;
 export const METRICS_TABLE = process.env.METRICS_TABLE!;
+export const BUILDER_SESSIONS_TABLE =
+  process.env.BUILDER_SESSIONS_TABLE!;
+export const BUILDER_AI_CONFIG_TABLE =
+  process.env.BUILDER_AI_CONFIG_TABLE!;

@@ -78,18 +78,27 @@ export function ReviewWorkoutScreen() {
     if (selectedIndices.size === 0 || !draft) return;
     const catalog = Array.isArray(catalogExercises) ? catalogExercises : [];
     const indices = Array.from(selectedIndices).sort((a, b) => a - b);
-    const firstIndex = indices[0];
-    const firstExercise = exercises[firstIndex];
-    const catalogItem = catalog.find((c: { exerciseId: string }) => c.exerciseId === firstExercise?.exerciseId);
-    const muscleGroup = (catalogItem as { muscleGroup?: string } | undefined)?.muscleGroup ?? 'full';
+
+    const targetMuscleGroups = indices.map((i) => {
+      const ex = exercises[i];
+      const catalogItem = catalog.find(
+        (c: { exerciseId: string }) => c.exerciseId === ex?.exerciseId
+      ) as { muscleGroup?: string } | undefined;
+      return catalogItem?.muscleGroup ?? 'full';
+    });
+
+    const userPrompt = draft.aiPrompt ?? '';
+    const equipmentTypes = draft.selectedGym?.equipmentTypes ?? undefined;
     setRegenerating(true);
     setRegenerateError(null);
     setRegenerateProgress(null);
     await streamWorkoutRegenerate(
       {
         exerciseIndices: indices,
-        currentExerciseIds: indices.map((i) => exercises[i].exerciseId),
-        muscleGroup,
+        currentExerciseIds: exercises.map((e) => e.exerciseId),
+        targetMuscleGroups,
+        userPrompt,
+        equipmentTypes,
       },
       exercises,
       {
@@ -105,7 +114,8 @@ export function ReviewWorkoutScreen() {
           setRegenerating(false);
           setRegenerateProgress(null);
         },
-      }
+      },
+      { builderSessionId: draft.builderSessionId ?? undefined }
     );
   };
 

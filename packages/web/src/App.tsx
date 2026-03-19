@@ -24,6 +24,8 @@ import LoginDialog from './components/LoginDialog';
 import { usersApi } from './api/users';
 import { useAuthStore } from './stores/authStore';
 import { Dumbbell } from 'lucide-react';
+import { AdminHomePage } from './features/admin/AdminHomePage';
+import { BuilderAiConfigPage } from './features/admin/BuilderAiConfigPage';
 
 function ConfigRequired() {
   return (
@@ -170,6 +172,11 @@ function App() {
         <Route
           path="/settings"
           element={<SettingsPage onLogout={handleLogout} />}
+        />
+        <Route path="/admin" element={<AdminHomePage />} />
+        <Route
+          path="/admin/builder-ai"
+          element={<BuilderAiConfigPage />}
         />
         <Route path="/goals" element={<GoalsPage />} />
         <Route path="/feed" element={<FeedPage />} />

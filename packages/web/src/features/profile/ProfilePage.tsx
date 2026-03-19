@@ -12,6 +12,7 @@ import { RecentWorkoutsWidget } from '@/components/widgets/RecentWorkoutsWidget'
 import { GymsSection } from './GymsSection';
 import { Spinner } from '@/components/ui/Spinner';
 import { Flame, Trophy, Calendar, Plus } from 'lucide-react';
+import { AdminFloatingButton } from '../admin/AdminFloatingButton';
 
 interface ProfilePageProps {
   onLogout: () => void;
@@ -177,6 +178,9 @@ export function ProfilePage({ onLogout }: ProfilePageProps) {
       >
         <Plus className="w-7 h-7 text-white" />
       </button>
+
+      {/* Floating Admin navigation */}
+      <AdminFloatingButton className="left-6 bottom-6" />
     </div>
   );
 }

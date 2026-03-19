@@ -20,7 +20,40 @@ function filterByEquipment(
   equipmentTypes?: string[]
 ): ExerciseCatalogItem[] {
   if (!equipmentTypes?.length) return items;
-  const set = new Set(equipmentTypes.map((e) => e.toLowerCase()));
+
+  /**
+   * Gym equipment categories (stored on Gym) must be mapped to the catalog's
+   * `equipment[]` token vocabulary (e.g. `free_weights` -> `barbell`).
+   *
+   * Also supports passing catalog tokens directly (e.g. `barbell` stays `barbell`).
+   */
+  const toCatalogTokens = (raw: string): string[] => {
+    const t = raw.toLowerCase();
+    switch (t) {
+      // Gym categories (from packages/web/src/constants/equipment.ts)
+      case 'dumbbells':
+        return ['dumbbell'];
+      case 'free_weights':
+        return ['barbell'];
+      case 'cables':
+        return ['cable'];
+      case 'weight_rack':
+        // Catalog currently doesn't appear to store an explicit "rack/bench" token.
+        // Treat "weight rack" as free weights so common rack-derived movements (barbell) remain included.
+        return ['barbell'];
+      case 'cardio':
+        return ['cardio'];
+      case 'machines':
+        return ['machine'];
+      default:
+        // If the caller already provided catalog tokens, keep them as-is.
+        return [t];
+    }
+  };
+
+  const set = new Set(
+    equipmentTypes.flatMap((t) => toCatalogTokens(String(t)))
+  );
   return items.filter((i) => {
     const eq = (i.equipment ?? []) as string[];
     return eq.some((e) => set.has(String(e).toLowerCase()));

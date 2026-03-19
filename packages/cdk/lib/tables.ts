@@ -6,6 +6,8 @@ export class TablesConstruct extends Construct {
   public readonly usersTable: dynamodb.Table;
   public readonly workoutsTable: dynamodb.Table;
   public readonly metricsTable: dynamodb.Table;
+  public readonly builderSessionsTable: dynamodb.Table;
+  public readonly builderAiConfigTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -48,6 +50,23 @@ export class TablesConstruct extends Construct {
 
     this.metricsTable = new dynamodb.Table(this, 'MetricsTable', {
       tableName: 'repwise-metrics',
+      partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    this.builderSessionsTable = new dynamodb.Table(this, 'BuilderSessionsTable', {
+      tableName: 'repwise-workout-builder-sessions',
+      partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      timeToLiveAttribute: 'expiresAt',
+    });
+
+    this.builderAiConfigTable = new dynamodb.Table(this, 'BuilderAiConfigTable', {
+      tableName: 'repwise-workout-builder-ai-config',
       partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,

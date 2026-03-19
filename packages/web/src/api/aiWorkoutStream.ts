@@ -18,7 +18,17 @@ export interface ProgressEvent {
 export interface RegenerateContext {
   exerciseIndices: number[];
   currentExerciseIds: string[];
-  muscleGroup: string;
+  targetMuscleGroups?: string[];
+  /**
+   * Original user prompt used to keep regeneration aligned with intent.
+   * Optional for backward compatibility.
+   */
+  userPrompt?: string;
+  /**
+   * Equipment constraints to filter the candidate set before regenerating.
+   * May include gym equipment categories (e.g. "free_weights") or catalog tokens (e.g. "barbell").
+   */
+  equipmentTypes?: string[];
 }
 
 export interface StreamCallbacks {
@@ -68,7 +78,11 @@ function parseSSE(buffer: string): Array<{ event: string; data: string }> {
 export async function streamWorkoutGeneration(
   aiPrompt: string,
   callbacks: StreamCallbacks,
-  options?: { weightUnit?: 'LBS' | 'KG'; equipmentTypes?: string[] }
+  options?: {
+    weightUnit?: 'LBS' | 'KG';
+    equipmentTypes?: string[];
+    builderSessionId?: string;
+  }
 ): Promise<void> {
   const url = getStreamUrl();
   const token = await getAuthToken();
@@ -76,6 +90,7 @@ export async function streamWorkoutGeneration(
     aiPrompt: aiPrompt.trim(),
     weightUnit: options?.weightUnit,
     equipmentTypes: options?.equipmentTypes,
+    builderSessionId: options?.builderSessionId,
   });
   const res = await fetch(url, {
     method: 'POST',
@@ -139,19 +154,21 @@ export async function streamWorkoutGeneration(
 }
 
 /**
- * Stream regenerate for selected exercises (same muscle group).
+ * Stream regenerate for selected exercises.
  * Sends regenerateContext + currentExercises; onComplete receives full updated list.
  */
 export async function streamWorkoutRegenerate(
   regenerateContext: RegenerateContext,
   currentExercises: WorkoutExercise[],
-  callbacks: StreamCallbacks
+  callbacks: StreamCallbacks,
+  options?: { builderSessionId?: string }
 ): Promise<void> {
   const url = getStreamUrl();
   const token = await getAuthToken();
   const body = JSON.stringify({
     regenerateContext,
     currentExercises,
+    builderSessionId: options?.builderSessionId,
   });
   const res = await fetch(url, {
     method: 'POST',

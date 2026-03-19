@@ -31,5 +31,13 @@ export class AuthConstruct extends Construct {
       authFlows: { userSrp: true },
       generateSecret: false,
     });
+
+    // Admin group for editing AI workout builder prompt templates/model at runtime.
+    new cognito.CfnUserPoolGroup(this, 'BuilderAdminGroup', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: 'builder-admin',
+      description: 'Admin access to Repwise workout builder AI configuration',
+      precedence: 1,
+    });
   }
 }
