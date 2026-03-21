@@ -154,13 +154,22 @@ export class RepwiseStack extends cdk.Stack {
     tables.workoutsTable.grantReadData(aiLambda);
     tables.metricsTable.grantReadData(aiLambda);
     tables.builderSessionsTable.grantReadWriteData(aiLambda);
-    tables.builderAiConfigTable.grantReadData(aiLambda);
+    tables.builderAiConfigTable.grantReadWriteData(aiLambda);
+    const bedrockModelIds = [
+      'amazon.nova-micro-v1:0',
+      'amazon.nova-lite-v1:0',
+      'amazon.nova-pro-v1:0',
+      'amazon.nova-premier-v1:0',
+      'anthropic.claude-3-5-haiku-20241022-v1:0',
+      'anthropic.claude-sonnet-4-5-20250929-v1:0',
+      'anthropic.claude-opus-4-5-20251101-v1:0',
+    ];
     aiLambda.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
-        resources: [
-          `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-micro-v1:0`,
-        ],
+        resources: bedrockModelIds.map(
+          (id) => `arn:aws:bedrock:${this.region}::foundation-model/${id}`
+        ),
       })
     );
 
@@ -220,6 +229,12 @@ export class RepwiseStack extends cdk.Stack {
     api.addRoute(
       apigwv2.HttpMethod.PUT,
       '/admin/builder-ai-config',
+      builderAiConfigLambda,
+      true
+    );
+    api.addRoute(
+      apigwv2.HttpMethod.GET,
+      '/admin/builder-ai-config/usage',
       builderAiConfigLambda,
       true
     );

@@ -8,6 +8,23 @@ export interface BuilderAiConfig {
   estimatedPricePerRequest?: string;
 }
 
+export interface TokenUsageByModel {
+  invocationCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  fullCount: number;
+  regenerateCount: number;
+}
+
+export interface TokenUsageResponse {
+  byModel: Record<string, TokenUsageByModel>;
+  totals: {
+    invocationCount: number;
+    inputTokens: number;
+    outputTokens: number;
+  };
+}
+
 export const builderAiConfigApi = {
   get: () =>
     apiClient
@@ -17,6 +34,13 @@ export const builderAiConfigApi = {
   put: (updates: Partial<BuilderAiConfig>) =>
     apiClient
       .put<BuilderAiConfig>('/admin/builder-ai-config', updates)
+      .then((r) => r.data),
+
+  getUsage: (params?: { modelIds?: string }) =>
+    apiClient
+      .get<TokenUsageResponse>('/admin/builder-ai-config/usage', {
+        params: params?.modelIds ? { modelIds: params.modelIds } : undefined,
+      })
       .then((r) => r.data),
 };
 

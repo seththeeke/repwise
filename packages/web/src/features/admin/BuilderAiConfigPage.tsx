@@ -1,18 +1,46 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Save } from 'lucide-react';
+import { ChevronLeft, RefreshCw, Save } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import {
   builderAiConfigApi,
   type BuilderAiConfig,
+  type TokenUsageResponse,
 } from '@/api/builderAiConfig';
 
 const AMAZON_BEDROCK_CONVERSE_MODELS: Array<{ label: string; value: string }> = [
   { label: 'amazon.nova-micro-v1:0 (fast)', value: 'amazon.nova-micro-v1:0' },
   { label: 'amazon.nova-lite-v1:0 (balanced)', value: 'amazon.nova-lite-v1:0' },
-  { label: 'amazon.nova-pro-v1:0 (best quality)', value: 'amazon.nova-pro-v1:0' },
+  { label: 'amazon.nova-pro-v1:0 (high quality)', value: 'amazon.nova-pro-v1:0' },
+  { label: 'amazon.nova-premier-v1:0 (Amazon best)', value: 'amazon.nova-premier-v1:0' },
+  { label: 'anthropic.claude-3-5-haiku (fast, capable)', value: 'anthropic.claude-3-5-haiku-20241022-v1:0' },
+  { label: 'anthropic.claude-sonnet-4-5 (top tier)', value: 'anthropic.claude-sonnet-4-5-20250929-v1:0' },
+  { label: 'anthropic.claude-opus-4-5 (frontier)', value: 'anthropic.claude-opus-4-5-20251101-v1:0' },
 ];
+
+/** Rough per-1M-token pricing (USD). Used for estimate only. */
+const PRICE_PER_1M: Record<string, { input: number; output: number }> = {
+  'amazon.nova-micro-v1:0': { input: 0.035, output: 0.14 },
+  'amazon.nova-lite-v1:0': { input: 0.04, output: 0.16 },
+  'amazon.nova-pro-v1:0': { input: 0.08, output: 0.32 },
+  'amazon.nova-premier-v1:0': { input: 0.3, output: 1.2 },
+  'anthropic.claude-3-5-haiku-20241022-v1:0': { input: 0.8, output: 4 },
+  'anthropic.claude-sonnet-4-5-20250929-v1:0': { input: 3, output: 15 },
+  'anthropic.claude-opus-4-5-20251101-v1:0': { input: 15, output: 75 },
+};
+
+function estimateCost(usage: TokenUsageResponse): number {
+  let total = 0;
+  for (const [modelId, stats] of Object.entries(usage.byModel)) {
+    const price = PRICE_PER_1M[modelId];
+    if (price) {
+      total += (stats.inputTokens / 1e6) * price.input;
+      total += (stats.outputTokens / 1e6) * price.output;
+    }
+  }
+  return total;
+}
 
 function isAxiosErrorWithStatus(err: unknown, status: number): boolean {
   const anyErr = err as any;
@@ -31,6 +59,16 @@ export function BuilderAiConfigPage() {
   } = useQuery({
     queryKey: ['builderAiConfig'],
     queryFn: builderAiConfigApi.get,
+    retry: 0,
+  });
+
+  const {
+    data: usageData,
+    isLoading: usageLoading,
+    refetch: refetchUsage,
+  } = useQuery({
+    queryKey: ['builderAiConfigUsage'],
+    queryFn: builderAiConfigApi.getUsage,
     retry: 0,
   });
 
@@ -180,22 +218,6 @@ export function BuilderAiConfigPage() {
 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-2">
           <p className="text-sm font-medium text-gray-900 dark:text-white">
-            Intent prompt template
-          </p>
-          <textarea
-            className="w-full min-h-48 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
-            value={draft.intentPromptTemplate}
-            onChange={(e) =>
-              setDraft({ ...draft, intentPromptTemplate: e.target.value })
-            }
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Placeholder: <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{USER_PROMPT}}"}</code>
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-2">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
             Select exercises prompt template
           </p>
           <textarea
@@ -210,8 +232,8 @@ export function BuilderAiConfigPage() {
           />
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Placeholders: <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{USER_PROMPT}}"}</code>,{' '}
-            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{CONSTRAINTS_TEXT}}"}</code>,{' '}
-            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{CATALOG_JSON}}"}</code>,{' '}
+            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{CATALOG}}"}</code>,{' '}
+            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{EQUIPMENT_HINT}}"}</code>,{' '}
             <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{GOALS_JSON}}"}</code>,{' '}
             <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{RECENT_JSON}}"}</code>
           </p>
@@ -234,9 +256,8 @@ export function BuilderAiConfigPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Placeholders: <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{COUNT}}"}</code>,{' '}
             <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{USER_PROMPT}}"}</code>,{' '}
-            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{MUSCLE_GROUP}}"}</code>,{' '}
-            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{EQUIPMENT_TYPES}}"}</code>,{' '}
-            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{CATALOG_JSON}}"}</code>
+            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{CATALOG}}"}</code>,{' '}
+            <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{"{{EXCLUDE_IDS}}"}</code>
           </p>
         </div>
 
@@ -249,6 +270,92 @@ export function BuilderAiConfigPage() {
           <Save className="w-5 h-5" />
           {saving ? 'Saving...' : 'Save changes'}
         </button>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              Token usage
+            </p>
+            <button
+              type="button"
+              onClick={() => refetchUsage()}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Refresh usage"
+            >
+              <RefreshCw
+                className={`w-4 h-4 text-gray-500 ${usageLoading ? 'animate-spin' : ''}`}
+              />
+            </button>
+          </div>
+          {usageLoading ? (
+            <div className="py-4 flex justify-center">
+              <Spinner />
+            </div>
+          ) : usageData ? (
+            <div className="space-y-3">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">Totals:</span>{' '}
+                {usageData.totals.invocationCount.toLocaleString()} invocations,{' '}
+                {usageData.totals.inputTokens.toLocaleString()} input tokens,{' '}
+                {usageData.totals.outputTokens.toLocaleString()} output tokens
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">Est. cost:</span>{' '}
+                ~${estimateCost(usageData).toFixed(4)} USD
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-600">
+                      <th className="text-left py-2 font-medium">Model</th>
+                      <th className="text-right py-2">Invocations</th>
+                      <th className="text-right py-2">Input</th>
+                      <th className="text-right py-2">Output</th>
+                      <th className="text-right py-2">Full</th>
+                      <th className="text-right py-2">Regen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(usageData.byModel)
+                      .filter(([, s]) => s.invocationCount > 0)
+                      .map(([modelId, stats]) => (
+                        <tr
+                          key={modelId}
+                          className="border-b border-gray-100 dark:border-gray-700"
+                        >
+                          <td className="py-2 truncate max-w-[180px]" title={modelId}>
+                            {modelId.split('/').pop() ?? modelId}
+                          </td>
+                          <td className="text-right py-2">
+                            {stats.invocationCount.toLocaleString()}
+                          </td>
+                          <td className="text-right py-2">
+                            {stats.inputTokens.toLocaleString()}
+                          </td>
+                          <td className="text-right py-2">
+                            {stats.outputTokens.toLocaleString()}
+                          </td>
+                          <td className="text-right py-2">{stats.fullCount}</td>
+                          <td className="text-right py-2">
+                            {stats.regenerateCount}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              {Object.values(usageData.byModel).every((s) => s.invocationCount === 0) && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                  No usage recorded yet.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+              Could not load usage.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

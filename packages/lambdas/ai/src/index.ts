@@ -1,6 +1,6 @@
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import {
   runFullFlow,
   runRegenerateFlow,
@@ -124,7 +124,10 @@ export const streamHandler = awslambda.streamifyResponse(
       };
 
       if (body.regenerateContext && body.currentExercises) {
-        console.log('[AI stream] regenerate flow', { indices: body.regenerateContext.exerciseIndices.length });
+        console.log('[AI stream] regenerate flow', {
+          userPrompt: body.regenerateContext.userPrompt ?? '(from session)',
+          indices: body.regenerateContext.exerciseIndices.length,
+        });
         const exercises = await runRegenerateFlow(
           body.currentExercises,
           body.regenerateContext,
@@ -136,7 +139,11 @@ export const streamHandler = awslambda.streamifyResponse(
         console.log('[AI stream] regenerate complete', { exercisesCount: exercises.length });
         writeSSE(responseStream, 'complete', { exercises });
       } else if (body.aiPrompt) {
-        console.log('[AI stream] full flow', { promptLength: body.aiPrompt.length, equipmentTypes: body.equipmentTypes?.length });
+        console.log('[AI stream] full flow', {
+          userPrompt: body.aiPrompt,
+          promptLength: body.aiPrompt.length,
+          equipmentTypes: body.equipmentTypes?.length,
+        });
         const exercises = await runFullFlow(
           userId,
           body.aiPrompt,
@@ -203,19 +210,93 @@ async function getUserGroupsFromAuthHeader(
 const BUILDER_AI_CONFIG_PK = 'BUILDER_AI_CONFIG';
 const BUILDER_AI_CONFIG_SK = 'GLOBAL';
 
+const USAGE_MODEL_IDS = [
+  'amazon.nova-micro-v1:0',
+  'amazon.nova-lite-v1:0',
+  'amazon.nova-pro-v1:0',
+  'amazon.nova-premier-v1:0',
+  'anthropic.claude-3-5-haiku-20241022-v1:0',
+  'anthropic.claude-sonnet-4-5-20250929-v1:0',
+  'anthropic.claude-opus-4-5-20251101-v1:0',
+];
+
 /**
- * Admin: GET/PUT /admin/builder-ai-config
+ * Admin: GET/PUT /admin/builder-ai-config, GET /admin/builder-ai-config/usage
  * Requires Cognito JWT group `builder-admin`.
  */
 export const builderAiConfigHandler = async (
   event: APIGatewayProxyEventV2WithJWTAuthorizer
 ): Promise<APIGatewayProxyResultV2> => {
   const method = event.requestContext.http.method;
+  const path = (event as { rawPath?: string }).rawPath ?? event.requestContext.http.path ?? '';
 
   const groups = await getUserGroupsFromAuthHeader(event);
   if (!groups.includes('builder-admin')) return res.forbidden();
 
   try {
+    if (method === 'GET' && path.endsWith('/usage')) {
+      const queryParams = event.queryStringParameters ?? {};
+      const modelIdsParam = queryParams.modelIds;
+      const modelIds = modelIdsParam
+        ? modelIdsParam.split(',').map((s) => s.trim()).filter(Boolean)
+        : USAGE_MODEL_IDS;
+
+      const byModel: Record<string, {
+        invocationCount: number;
+        inputTokens: number;
+        outputTokens: number;
+        fullCount: number;
+        regenerateCount: number;
+      }> = {};
+      let totalsInvocation = 0;
+      let totalsInput = 0;
+      let totalsOutput = 0;
+
+      for (const modelId of modelIds) {
+        const out = await ddb.send(
+          new QueryCommand({
+            TableName: BUILDER_AI_CONFIG_TABLE,
+            KeyConditionExpression: 'PK = :pk',
+            ExpressionAttributeValues: { ':pk': modelId },
+          })
+        );
+        const items = (out.Items ?? []) as Array<{
+          inputTokens?: number;
+          outputTokens?: number;
+          runType?: string;
+        }>;
+        let inputTokens = 0;
+        let outputTokens = 0;
+        let fullCount = 0;
+        let regenerateCount = 0;
+        for (const item of items) {
+          inputTokens += item.inputTokens ?? 0;
+          outputTokens += item.outputTokens ?? 0;
+          if (item.runType === 'full') fullCount++;
+          else if (item.runType === 'regenerate') regenerateCount++;
+        }
+        byModel[modelId] = {
+          invocationCount: items.length,
+          inputTokens,
+          outputTokens,
+          fullCount,
+          regenerateCount,
+        };
+        totalsInvocation += items.length;
+        totalsInput += inputTokens;
+        totalsOutput += outputTokens;
+      }
+
+      return res.ok({
+        byModel,
+        totals: {
+          invocationCount: totalsInvocation,
+          inputTokens: totalsInput,
+          outputTokens: totalsOutput,
+        },
+      });
+    }
+
     if (method === 'GET') {
       const out = await ddb.send(
         new GetCommand({
