@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { Dumbbell } from 'lucide-react';
 import { metricsApi } from '@/api/metrics';
 import { Spinner } from '@/components/ui/Spinner';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export function ExerciseMetricsList() {
   const navigate = useNavigate();
@@ -23,9 +25,11 @@ export function ExerciseMetricsList() {
   return (
     <div className="space-y-2">
       {exercises.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-          No exercise history yet. Complete workouts to see your metrics.
-        </p>
+        <EmptyState
+          icon={<Dumbbell className="w-7 h-7" />}
+          heading="No exercise history yet"
+          subtext="Complete workouts to see your metrics."
+        />
       ) : (
         exercises.map((em: { exerciseId: string; exerciseName: string; maxWeight: number; maxWeightUnit: string; totalSessions: number; lastPerformedDate?: string }) => (
           <button

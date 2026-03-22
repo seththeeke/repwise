@@ -1,5 +1,6 @@
 import { Target, ChevronRight } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { Goal } from '@/types';
 
 interface GoalsWidgetProps {
@@ -46,9 +47,22 @@ export function GoalsWidget({
         )}
       </div>
       {activeGoals.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-          No goals yet. Set a target to stay motivated.
-        </p>
+        <EmptyState
+          icon={<Target className="w-7 h-7" />}
+          heading="No goals yet"
+          subtext="Set a target to stay motivated."
+          action={
+            onAddGoal ? (
+              <button
+                type="button"
+                onClick={onAddGoal}
+                className="text-primary text-sm font-medium hover:underline"
+              >
+                Add goal
+              </button>
+            ) : null
+          }
+        />
       ) : (
       <div className="space-y-3">
         {activeGoals.map((goal) => {

@@ -36,6 +36,10 @@ export function EditProfileSheet({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (displayName.trim().length > 50) {
+      setError('Display name must be 50 characters or less.');
+      return;
+    }
     setSaving(true);
     try {
       await usersApi.patchMe({
@@ -59,12 +63,16 @@ export function EditProfileSheet({
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Your name"
+          maxLength={50}
+          showCharCount
         />
         <Input
           label="Bio"
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           placeholder="A short bio"
+          maxLength={200}
+          showCharCount
         />
         <Input
           label="Profile photo URL"

@@ -29,6 +29,8 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const resetForm = () => {
     setView('signin');
@@ -38,6 +40,25 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
     setCode('');
     setError('');
     setSuccessMessage('');
+    setEmailError('');
+    setConfirmPasswordError('');
+  };
+
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+  const handleEmailBlur = () => {
+    if (email.trim() && !isValidEmail(email)) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError('');
+    }
+  };
+  const handleConfirmPasswordChange = (v: string) => {
+    setConfirmPassword(v);
+    setConfirmPasswordError(v && v !== password ? 'Passwords do not match' : '');
+  };
+  const handlePasswordChange = (v: string) => {
+    setPassword(v);
+    if (confirmPassword) setConfirmPasswordError(v !== confirmPassword ? 'Passwords do not match' : '');
   };
 
   const handleClose = () => {
@@ -65,8 +86,12 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!isValidEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setConfirmPasswordError('Passwords do not match');
       return;
     }
     if (password.length < 8) {
@@ -108,6 +133,10 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!isValidEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
     setLoading(true);
     try {
       await resetPassword({ username: email });
@@ -197,12 +226,16 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                   id="login-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                  onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
+                  onBlur={handleEmailBlur}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all ${
+                    emailError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Enter your email"
                   required
                   autoComplete="email"
                 />
+                {emailError && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
               </div>
               <div>
                 <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -262,12 +295,16 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                   id="signup-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
+                  onBlur={handleEmailBlur}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                    emailError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Enter your email"
                   required
                   autoComplete="email"
                 />
+                {emailError && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
               </div>
               <div>
                 <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -277,7 +314,7 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                   id="signup-password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="At least 8 characters"
                   required
@@ -293,13 +330,16 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                   id="signup-confirm"
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                    confirmPasswordError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Confirm password"
                   required
                   minLength={8}
                   autoComplete="new-password"
                 />
+                {confirmPasswordError && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{confirmPasswordError}</p>}
               </div>
               <button
                 type="submit"
@@ -376,12 +416,16 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                   id="forgot-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
+                  onBlur={handleEmailBlur}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                    emailError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Enter your email"
                   required
                   autoComplete="email"
                 />
+                {emailError && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
               </div>
               <button
                 type="submit"

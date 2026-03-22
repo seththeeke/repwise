@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { feedApi } from '@/api/feed';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Activity } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import { Avatar } from '@/components/ui/Avatar';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export function FeedPage() {
   const navigate = useNavigate();
@@ -37,10 +38,12 @@ export function FeedPage() {
             <Spinner />
           </div>
         ) : items.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              No activity yet.
-            </p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8">
+            <EmptyState
+              icon={<Activity className="w-7 h-7" />}
+              heading="No activity yet"
+              subtext="Complete workouts to see your feed."
+            />
           </div>
         ) : (
           <div className="space-y-4">

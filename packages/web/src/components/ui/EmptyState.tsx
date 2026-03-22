@@ -2,6 +2,7 @@ interface EmptyStateProps {
   icon: React.ReactNode;
   heading: string;
   subtext?: string;
+  action?: React.ReactNode;
   className?: string;
 }
 
@@ -9,6 +10,7 @@ export function EmptyState({
   icon,
   heading,
   subtext,
+  action,
   className = '',
 }: EmptyStateProps) {
   return (
@@ -22,10 +24,11 @@ export function EmptyState({
         {heading}
       </h3>
       {subtext ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mb-4">
           {subtext}
         </p>
       ) : null}
+      {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
 }

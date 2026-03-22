@@ -1,10 +1,13 @@
 import { Clock, ChevronRight, Dumbbell } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { WorkoutInstance } from '@/types';
 
 interface RecentWorkoutsWidgetProps {
   workouts: WorkoutInstance[];
   onSeeAll: () => void;
   onWorkoutPress: (workoutId: string) => void;
+  /** Optional: called when empty state "Log a workout" is clicked. Defaults to onSeeAll. */
+  onLogWorkout?: () => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -29,6 +32,7 @@ export function RecentWorkoutsWidget({
   workouts,
   onSeeAll,
   onWorkoutPress,
+  onLogWorkout,
 }: RecentWorkoutsWidgetProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
@@ -49,9 +53,19 @@ export function RecentWorkoutsWidget({
       </div>
       <div className="space-y-3">
         {workouts.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-            No workouts yet
-          </p>
+          <EmptyState
+            icon={<Dumbbell className="w-7 h-7" />}
+            heading="No workouts yet"
+            action={
+              <button
+                type="button"
+                onClick={onLogWorkout ?? onSeeAll}
+                className="text-primary text-sm font-medium hover:underline"
+              >
+                Log a workout
+              </button>
+            }
+          />
         ) : (
           workouts.map((workout) => (
             <button

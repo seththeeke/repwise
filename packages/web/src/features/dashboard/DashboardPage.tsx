@@ -13,7 +13,6 @@ import { WeekCalendarWidget } from '@/components/widgets/WeekCalendarWidget';
 import { GoalsWidget } from '@/components/widgets/GoalsWidget';
 import { RecentWorkoutsWidget } from '@/components/widgets/RecentWorkoutsWidget';
 import { ActivityFeedWidget } from '@/components/widgets/ActivityFeedWidget';
-import { ToastContainer } from '@/components/ui/Toast';
 import { AdminFloatingButton } from '../admin/AdminFloatingButton';
 
 interface DashboardPageProps {
@@ -59,10 +58,17 @@ export function DashboardPage({
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-        <p className="text-red-600 dark:text-red-400 text-center">
-          Failed to load dashboard. Please try again.
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <p className="text-red-600 dark:text-red-400 text-center mb-4">
+          Something went wrong. Please try again.
         </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark"
+        >
+          Try again
+        </button>
       </div>
     );
   }
@@ -107,7 +113,6 @@ export function DashboardPage({
           }}
         />
       )}
-      <ToastContainer />
 
       <div className="bg-gradient-to-b from-primary to-primary-dark px-4 pt-12 pb-8">
         <DashboardHeader displayName={displayName} profilePhoto={profilePhoto} />
@@ -148,6 +153,7 @@ export function DashboardPage({
           workouts={recentWorkouts.slice(0, 5)}
           onSeeAll={() => navigate('/workouts')}
           onWorkoutPress={(id) => navigate(`/workouts/${id}`)}
+          onLogWorkout={() => navigate('/workout/new')}
         />
 
         <ActivityFeedWidget feedItems={feedItems} />

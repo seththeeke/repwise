@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { workoutsApi } from '@/api/workouts';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { WorkoutSource, PermissionType } from '@/types';
-import { ChevronLeft, Dumbbell } from 'lucide-react';
+import { ChevronLeft, Dumbbell, Calendar } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const PAGE_SIZE = 20;
 
@@ -108,10 +109,21 @@ export function WorkoutsHistoryPage() {
             <Spinner />
           </div>
         ) : items.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              No completed workouts yet.
-            </p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8">
+            <EmptyState
+              icon={<Calendar className="w-7 h-7" />}
+              heading="No workouts yet"
+              subtext="Log your first workout to get started."
+              action={
+                <button
+                  type="button"
+                  onClick={() => navigate('/workout/new')}
+                  className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark"
+                >
+                  Log your first workout
+                </button>
+              }
+            />
           </div>
         ) : (
           <>

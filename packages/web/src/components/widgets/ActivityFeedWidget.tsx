@@ -1,5 +1,6 @@
 import { Award, Dumbbell } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { FeedItem } from '@/types';
 
 interface ActivityFeedWidgetProps {
@@ -31,9 +32,11 @@ export function ActivityFeedWidget({
       </h2>
       <div className="space-y-4">
         {feedItems.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-            No activity yet
-          </p>
+          <EmptyState
+            icon={<Dumbbell className="w-7 h-7" />}
+            heading="No activity yet"
+            subtext="Complete workouts or follow others to see activity."
+          />
         ) : (
           feedItems.map((item) => (
             <div key={item.eventId} className="flex gap-3">

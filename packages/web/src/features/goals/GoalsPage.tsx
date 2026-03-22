@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { goalsApi } from '@/api/goals';
 import { GoalStatus, GoalType, GoalTimeframe, type Goal } from '@/types';
-import { ChevronLeft, Plus, X } from 'lucide-react';
+import { ChevronLeft, Plus, X, Target } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const GOAL_TYPE_LABELS: Record<GoalType, string> = {
   [GoalType.TOTAL_WORKOUTS]: 'Total workouts',
@@ -57,6 +58,10 @@ export function GoalsPage() {
       setAddError('Title and a positive target are required.');
       return;
     }
+    if (addTitle.trim().length > 100) {
+      setAddError('Title must be 100 characters or less.');
+      return;
+    }
     setAddError(null);
     setAddSubmitting(true);
     try {
@@ -74,7 +79,7 @@ export function GoalsPage() {
       setAddTarget('');
       setAddUnit('');
     } catch {
-      setAddError('Failed to create goal.');
+      setAddError('Something went wrong. Please try again.');
     } finally {
       setAddSubmitting(false);
     }
@@ -110,17 +115,21 @@ export function GoalsPage() {
             <Spinner />
           </div>
         ) : list.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              No goals yet. Create one to get started.
-            </p>
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark"
-            >
-              Add goal
-            </button>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8">
+            <EmptyState
+              icon={<Target className="w-7 h-7" />}
+              heading="No goals yet"
+              subtext="Create one to get started."
+              action={
+                <button
+                  type="button"
+                  onClick={() => setAddOpen(true)}
+                  className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark"
+                >
+                  Add goal
+                </button>
+              }
+            />
           </div>
         ) : (
           <div className="space-y-3">
@@ -169,8 +178,14 @@ export function GoalsPage() {
                   value={addTitle}
                   onChange={(e) => setAddTitle(e.target.value)}
                   placeholder="e.g. Hit 12 workouts this month"
+                  maxLength={100}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
+                {addTitle.length > 0 && (
+                  <p className={`mt-1 text-xs ${addTitle.length >= 100 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {addTitle.length} / 100
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

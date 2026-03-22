@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { getCurrentUser, signOut as amplifySignOut } from 'aws-amplify/auth';
@@ -22,8 +22,11 @@ import { WorkoutDetailPage } from './features/workout/WorkoutDetailPage';
 import { WorkoutsHistoryPage } from './features/workout/WorkoutsHistoryPage';
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import LoginDialog from './components/LoginDialog';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastContainer } from './components/ui/Toast';
 import { usersApi } from './api/users';
 import { useAuthStore } from './stores/authStore';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { Dumbbell } from 'lucide-react';
 import { AdminHomePage } from './features/admin/AdminHomePage';
 import { BuilderAiConfigPage } from './features/admin/BuilderAiConfigPage';
@@ -41,6 +44,20 @@ function NativeLoginRedirect() {
     }
   }, [navigate, location.pathname]);
   return null;
+}
+
+function AppShell({ children }: { children: ReactNode }) {
+  const isOnline = useOnlineStatus();
+  return (
+    <ErrorBoundary>
+      {!isOnline && (
+        <div className="sticky top-0 z-50 px-4 py-2 bg-amber-500 text-amber-950 text-center text-sm font-medium">
+          You're offline. Some features may not work.
+        </div>
+      )}
+      {children}
+    </ErrorBoundary>
+  );
 }
 
 function ConfigRequired() {
@@ -121,14 +138,20 @@ function App() {
   const profilePhoto = profile?.profilePhoto ?? undefined;
 
   if (!isCognitoConfigured) {
-    return <ConfigRequired />;
+    return (
+      <AppShell>
+        <ConfigRequired />
+      </AppShell>
+    );
   }
 
   if (!authChecked) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary to-primary-dark">
-        <Dumbbell className="w-14 h-14 text-white animate-spin" aria-label="Loading" />
-      </div>
+      <AppShell>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary to-primary-dark">
+          <Dumbbell className="w-14 h-14 text-white animate-spin" aria-label="Loading" />
+        </div>
+      </AppShell>
     );
   }
 
@@ -136,6 +159,7 @@ function App() {
     const isNativeApp = Capacitor.getPlatform() !== 'web';
     if (isNativeApp) {
       return (
+        <AppShell>
         <LoginDialog
           open
           onClose={() => {}}
@@ -145,9 +169,11 @@ function App() {
           }}
           variant="fullscreen"
         />
+        </AppShell>
       );
     }
     return (
+      <AppShell>
       <>
         <LandingPage onOpenLogin={() => setLoginOpen(true)} />
         <LoginDialog
@@ -156,6 +182,7 @@ function App() {
           onSuccess={loadUser}
         />
       </>
+      </AppShell>
     );
   }
 
@@ -169,6 +196,7 @@ function App() {
 
   if (showOnboarding) {
     return (
+      <AppShell>
       <OnboardingFlow
         onComplete={async () => {
           if (forceOnboarding) {
@@ -179,13 +207,16 @@ function App() {
           setProfile(p);
         }}
       />
+      </AppShell>
     );
   }
 
   return (
-    <BrowserRouter>
-      <NativeLoginRedirect />
-      <Routes>
+    <AppShell>
+      <BrowserRouter>
+        <NativeLoginRedirect />
+        <ToastContainer />
+        <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route
           path="/dashboard"
@@ -223,6 +254,7 @@ function App() {
         <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
       </Routes>
     </BrowserRouter>
+    </AppShell>
   );
 }
 
