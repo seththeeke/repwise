@@ -37,13 +37,13 @@ Replace blank content areas with skeleton screens, add loading states to buttons
 
 ### Skeleton Screens
 
-- [ ] Dashboard: Replace initial `Dumbbell animate-spin` with skeleton layout for stats, widgets, feed
-- [ ] WorkoutsHistoryPage: Skeleton rows for workout list while loading
-- [ ] GoalsPage: Skeleton cards for goals
-- [ ] FeedPage: Skeleton for feed items
-- [ ] ExerciseCatalogPage: Skeleton for exercise list
-- [ ] ExerciseMetricsList: Skeleton for metrics list
-- [ ] Reuse `Skeleton`; consider variant for "shimmer" if desired (animate-pulse already present)
+- [x] Dashboard: Replace initial `Dumbbell animate-spin` with skeleton layout for stats, widgets, feed
+- [x] WorkoutsHistoryPage: Skeleton rows for workout list while loading
+- [x] GoalsPage: Skeleton cards for goals
+- [x] FeedPage: Skeleton for feed items
+- [x] ExerciseCatalogPage: Skeleton for exercise list
+- [x] ExerciseMetricsList: Skeleton for metrics list
+- [x] Reuse `Skeleton`; consider variant for "shimmer" if desired (animate-pulse already present)
 
 ### Button Loading States
 
@@ -51,17 +51,13 @@ Replace blank content areas with skeleton screens, add loading states to buttons
 - [ ] Start workout: `loading` while creating workout
 - [ ] Save workout: `loading` on finish
 - [ ] Add goal: `loading` in modal
-- [ ] AI Generate: Already has loading UI; verify no double-tap
 - [ ] Edit profile save: `loading` on submit
 - [ ] LoginDialog: Already uses Loader2; consider `Button` with `loading` for consistency
 
 ### Toast Confirmations
 
 - [ ] Move `ToastContainer` from `DashboardPage` to `App.tsx` (inside Router, below main content)
-- [ ] Add `addToast({ type: 'success', message: 'Set logged' })` when set is saved
-- [ ] Add `addToast({ type: 'success', message: 'Workout saved' })` on workout complete
 - [ ] Add `addToast({ type: 'success', message: 'Goal created' })` on goal add
-- [ ] Add toast for PR logged (e.g. "New PR: Bench Press 185 lbs")
 - [ ] Add toast for errors where appropriate (e.g. "Failed to save — try again")
 - [ ] Ensure toast store is imported and used in execution flow, goals, profile
 
@@ -79,19 +75,6 @@ Replace blank content areas with skeleton screens, add loading states to buttons
 - [ ] Use CSS `overscroll-behavior` or Capacitor pull-to-refresh
 - [ ] Apply to: Dashboard, WorkoutsHistoryPage, FeedPage, GoalsPage
 - [ ] Trigger `refetch()` or equivalent for the page's data
-
-### Optimistic UI
-
-- [ ] Log set: Update local state immediately; revert on API error + show toast
-- [ ] Skip set: Same pattern
-- [ ] Reorder exercises in builder: Already local; ensure API failure is handled
-- [ ] Add/remove exercise in builder: Optimistic update with rollback on error
-
-### Progress Indicators on Long Operations
-
-- [ ] AI workout generation: Show progress steps (e.g. "Finding exercises...", "Building workout...") — may already exist
-- [ ] Data import (if added later): Progress bar
-- [ ] Sync operations: Percentage or step indicator instead of spinner only
 
 ---
 

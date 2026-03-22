@@ -5,8 +5,9 @@ import { workoutsApi } from '@/api/workouts';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { WorkoutSource, PermissionType } from '@/types';
 import { ChevronLeft, Dumbbell, Calendar } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useDevToolsStore } from '@/stores/devToolsStore';
 
 const PAGE_SIZE = 20;
 
@@ -28,6 +29,7 @@ export function WorkoutsHistoryPage() {
   const [page, setPage] = useState(0);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
+  const simulateLoading = useDevToolsStore((s) => s.simulateLoading);
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['workouts-history', page, nextTokens[page]],
     queryFn: async () => {
@@ -104,10 +106,20 @@ export function WorkoutsHistoryPage() {
       </div>
 
       <div className="px-4 -mt-2">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Spinner />
-          </div>
+        {(isLoading || simulateLoading) ? (
+          <ul className="space-y-2" aria-label="Loading">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <li key={i}>
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                  <Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         ) : items.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-8">
             <EmptyState

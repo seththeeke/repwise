@@ -4,8 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { goalsApi } from '@/api/goals';
 import { GoalStatus, GoalType, GoalTimeframe, type Goal } from '@/types';
 import { ChevronLeft, Plus, X, Target } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useDevToolsStore } from '@/stores/devToolsStore';
 
 const GOAL_TYPE_LABELS: Record<GoalType, string> = {
   [GoalType.TOTAL_WORKOUTS]: 'Total workouts',
@@ -41,6 +42,7 @@ export function GoalsPage() {
     if (searchParams.get('add') === '1') setAddOpen(true);
   }, [searchParams]);
 
+  const simulateLoading = useDevToolsStore((s) => s.simulateLoading);
   const { data: goalsRes, isLoading } = useQuery({
     queryKey: ['goals', GoalStatus.ACTIVE],
     queryFn: () => goalsApi.list(GoalStatus.ACTIVE),
@@ -110,9 +112,11 @@ export function GoalsPage() {
       </div>
 
       <div className="px-4 py-6">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Spinner />
+        {(isLoading || simulateLoading) ? (
+          <div className="space-y-3" aria-label="Loading">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 rounded-xl" />
+            ))}
           </div>
         ) : list.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-8">

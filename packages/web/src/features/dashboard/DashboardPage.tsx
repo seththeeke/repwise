@@ -1,8 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Dumbbell } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 const FAB_GUIDED_KEY = 'workout_fab_guided';
+
+function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+      <div className="bg-gradient-to-b from-primary to-primary-dark px-4 pt-12 pb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Skeleton className="w-12 h-12 rounded-full" />
+          <div className="flex-1">
+            <Skeleton className="h-6 w-32 mb-2" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+        <Skeleton className="h-16 w-full rounded-xl" />
+      </div>
+      <div className="px-4 -mt-4 space-y-6">
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-20 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-32 rounded-xl" />
+        <Skeleton className="h-36 rounded-xl" />
+        <Skeleton className="h-28 rounded-xl" />
+      </div>
+    </div>
+  );
+}
 import { useDashboardData } from './hooks/useDashboardData';
 import { CalendarViewModal } from '@/components/widgets/CalendarViewModal';
 import { DashboardHeader } from './DashboardHeader';
@@ -14,6 +44,7 @@ import { GoalsWidget } from '@/components/widgets/GoalsWidget';
 import { RecentWorkoutsWidget } from '@/components/widgets/RecentWorkoutsWidget';
 import { ActivityFeedWidget } from '@/components/widgets/ActivityFeedWidget';
 import { AdminFloatingButton } from '../admin/AdminFloatingButton';
+import { useDevToolsStore } from '@/stores/devToolsStore';
 
 interface DashboardPageProps {
   displayName: string;
@@ -27,7 +58,9 @@ export function DashboardPage({
   const navigate = useNavigate();
   const [showCalendar, setShowCalendar] = useState(false);
   const [showFabCoachMark, setShowFabCoachMark] = useState(false);
+  const simulateLoading = useDevToolsStore((s) => s.simulateLoading);
   const { data, isLoading, error } = useDashboardData();
+  const showSkeleton = isLoading || simulateLoading;
 
   useEffect(() => {
     try {
@@ -48,12 +81,8 @@ export function DashboardPage({
     setShowFabCoachMark(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary to-primary-dark">
-        <Dumbbell className="w-14 h-14 text-white animate-spin" aria-label="Loading" />
-      </div>
-    );
+  if (showSkeleton) {
+    return <DashboardSkeleton />;
   }
 
   if (error) {
@@ -173,7 +202,7 @@ export function DashboardPage({
       </button>
 
       {/* Floating Admin navigation */}
-      <AdminFloatingButton className="left-6 bottom-6" />
+      <AdminFloatingButton className="left-6" />
 
       {/* One-time coach mark for FAB */}
       {showFabCoachMark && (

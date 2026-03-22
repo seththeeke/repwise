@@ -2,11 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell } from 'lucide-react';
 import { metricsApi } from '@/api/metrics';
-import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useDevToolsStore } from '@/stores/devToolsStore';
 
 export function ExerciseMetricsList() {
   const navigate = useNavigate();
+  const simulateLoading = useDevToolsStore((s) => s.simulateLoading);
   const { data: list = [], isLoading } = useQuery({
     queryKey: ['metrics', 'exercises'],
     queryFn: () => metricsApi.listExercises(),
@@ -14,10 +16,20 @@ export function ExerciseMetricsList() {
 
   const exercises = Array.isArray(list) ? list : [];
 
-  if (isLoading) {
+  if (isLoading || simulateLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <Spinner />
+      <div className="space-y-2" aria-label="Loading">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-4 w-12" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

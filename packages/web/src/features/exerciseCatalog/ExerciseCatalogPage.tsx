@@ -6,7 +6,8 @@ import { exercisesApi } from '@/api/exercises';
 import { ExerciseDetailSheet } from './ExerciseDetailSheet';
 import type { ExerciseCatalogItem } from '@/types';
 import { ExerciseModality } from '@/types';
-import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { useDevToolsStore } from '@/stores/devToolsStore';
 
 const MUSCLE_GROUPS = [
   'All',
@@ -27,6 +28,7 @@ export function ExerciseCatalogPage() {
   const [muscleGroup, setMuscleGroup] = useState<string | null>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
 
+  const simulateLoading = useDevToolsStore((s) => s.simulateLoading);
   const { data: list = [], isLoading } = useQuery({
     queryKey: ['exercises', muscleGroup, searchQuery],
     queryFn: () =>
@@ -95,9 +97,19 @@ export function ExerciseCatalogPage() {
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Spinner />
+        {(isLoading || simulateLoading) ? (
+          <div className="space-y-2" aria-label="Loading">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="w-5 h-5 rounded flex-shrink-0" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="space-y-2">

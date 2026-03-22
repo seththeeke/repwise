@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { feedApi } from '@/api/feed';
 import { ChevronLeft, Activity } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Avatar } from '@/components/ui/Avatar';
+import { useDevToolsStore } from '@/stores/devToolsStore';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 export function FeedPage() {
@@ -33,9 +34,17 @@ export function FeedPage() {
       </div>
 
       <div className="px-4 py-6">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Spinner />
+        {(isLoading || simulateLoading) ? (
+          <div className="space-y-4" aria-label="Loading">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex gap-3">
+                <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : items.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-8">

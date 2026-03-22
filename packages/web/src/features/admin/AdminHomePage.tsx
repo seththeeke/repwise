@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Settings2, Sparkles, ArrowLeft } from 'lucide-react';
+import { Settings2, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import { builderAiConfigApi } from '@/api/builderAiConfig';
+import { useDevToolsStore } from '@/stores/devToolsStore';
 
 export function AdminHomePage() {
   const navigate = useNavigate();
+  const { simulateLoading, setSimulateLoading } = useDevToolsStore();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['builderAiConfig', 'admin-check'],
@@ -71,7 +73,7 @@ export function AdminHomePage() {
         </p>
       </div>
 
-      <div className="px-4 py-6 space-y-3">
+      <div className="px-4 py-6 space-y-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={() => navigate('/admin/builder-ai')}
@@ -90,6 +92,33 @@ export function AdminHomePage() {
             </p>
           </div>
         </button>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 flex items-start gap-3">
+          <div className="mt-0.5">
+            <Loader2 className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">
+                Simulate loading
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Preview skeleton screens on Dashboard, Workouts, Goals, Feed, etc.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={simulateLoading}
+                onChange={(e) => setSimulateLoading(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                {simulateLoading ? 'On' : 'Off'}
+              </span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );

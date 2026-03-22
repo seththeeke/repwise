@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ChevronLeft } from 'lucide-react';
+import { LogOut, ChevronLeft, Settings2 } from 'lucide-react';
 
 interface SettingsPageProps {
   onLogout: () => void;
@@ -25,13 +25,22 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         </div>
       </div>
 
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 py-6 space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
           <p className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
             Display name, bio, weight unit, and privacy can be edited from your
             profile.
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('/admin')}
+          className="w-full py-3 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl font-medium flex items-center justify-center gap-2 text-gray-900 dark:text-white transition-colors"
+        >
+          <Settings2 className="w-5 h-5 text-primary" />
+          Admin
+        </button>
 
         <button
           type="button"

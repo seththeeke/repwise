@@ -180,7 +180,7 @@ export function ProfilePage({ onLogout }: ProfilePageProps) {
       </button>
 
       {/* Floating Admin navigation */}
-      <AdminFloatingButton className="left-6 bottom-6" />
+      <AdminFloatingButton className="left-6" />
     </div>
   );
 }

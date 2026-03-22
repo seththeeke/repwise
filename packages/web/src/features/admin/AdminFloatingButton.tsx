@@ -35,7 +35,8 @@ export function AdminFloatingButton({
       type="button"
       onClick={() => navigate('/admin')}
       className={[
-        'fixed bottom-6 z-20 w-14 h-14 bg-primary hover:bg-primary-dark rounded-full shadow-lg shadow-primary/40 flex items-center justify-center transition-all hover:scale-105 active:scale-95',
+        'fixed z-20 w-14 h-14 bg-primary hover:bg-primary-dark rounded-full shadow-lg shadow-primary/40 flex items-center justify-center transition-all hover:scale-105 active:scale-95',
+        'bottom-[max(1.5rem,env(safe-area-inset-bottom))]',
         className ?? 'left-6',
       ].join(' ')}
       aria-label="Admin"
