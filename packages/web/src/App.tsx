@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { getCurrentUser, signOut as amplifySignOut } from 'aws-amplify/auth';
 import { isCognitoConfigured } from './lib/amplify';
 import { Navigate } from 'react-router-dom';
@@ -26,6 +27,21 @@ import { useAuthStore } from './stores/authStore';
 import { Dumbbell } from 'lucide-react';
 import { AdminHomePage } from './features/admin/AdminHomePage';
 import { BuilderAiConfigPage } from './features/admin/BuilderAiConfigPage';
+
+function NativeLoginRedirect() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    if (
+      Capacitor.getPlatform() !== 'web' &&
+      sessionStorage.getItem('repwise_native_login_redirect') === '1'
+    ) {
+      sessionStorage.removeItem('repwise_native_login_redirect');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate, location.pathname]);
+  return null;
+}
 
 function ConfigRequired() {
   return (
@@ -117,6 +133,20 @@ function App() {
   }
 
   if (!user) {
+    const isNativeApp = Capacitor.getPlatform() !== 'web';
+    if (isNativeApp) {
+      return (
+        <LoginDialog
+          open
+          onClose={() => {}}
+          onSuccess={() => {
+            sessionStorage.setItem('repwise_native_login_redirect', '1');
+            loadUser();
+          }}
+          variant="fullscreen"
+        />
+      );
+    }
     return (
       <>
         <LandingPage onOpenLogin={() => setLoginOpen(true)} />
@@ -154,6 +184,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <NativeLoginRedirect />
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route

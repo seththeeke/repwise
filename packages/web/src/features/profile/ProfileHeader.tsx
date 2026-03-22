@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit2 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 import type { UserProfile } from '@/types';
 
 interface ProfileHeaderProps {
@@ -41,6 +42,7 @@ export function ProfileCard({
   profile,
   onEditClick,
 }: ProfileHeaderProps) {
+  const isNativeApp = useIsNativeApp();
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg -mt-16 mx-4 relative z-10">
       <div className="flex items-start gap-4">
@@ -64,7 +66,7 @@ export function ProfileCard({
               <Edit2 className="w-4 h-4 text-gray-400" />
             </button>
           </div>
-          <p className="text-gray-500 dark:text-gray-400">@{profile.username}</p>
+          <p className={`text-gray-500 dark:text-gray-400 ${isNativeApp ? 'truncate' : ''}`}>@{profile.username}</p>
           {profile.bio ? (
             <p className="text-gray-700 dark:text-gray-300 mt-2 text-sm">
               {profile.bio}

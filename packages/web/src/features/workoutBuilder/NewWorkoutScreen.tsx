@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Wand2, Plus, History, ChevronDown } from 'lucide-react';
 import { gymsApi } from '@/api/gyms';
+import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 
 export function NewWorkoutScreen() {
   const navigate = useNavigate();
+  const isNativeApp = useIsNativeApp();
   const { data: gymsData } = useQuery({
     queryKey: ['gyms'],
     queryFn: () => gymsApi.list(),
@@ -17,20 +19,33 @@ export function NewWorkoutScreen() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard')}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-          New Workout
-        </h1>
-      </div>
+      {!isNativeApp && (
+        <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            New Workout
+          </h1>
+        </div>
+      )}
 
-      <div className="flex-1 flex flex-col items-center pt-6 px-6 pb-8">
+      <div className={`flex-1 flex flex-col items-center px-6 pb-8 pt-6`}>
+        {isNativeApp && (
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="self-start p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors mb-2"
+            style={{ marginTop: 'env(safe-area-inset-top)' }}
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+        )}
         {gyms.length > 0 && (
           <div className="relative inline-flex items-center justify-center mb-3">
             <select

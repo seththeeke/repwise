@@ -49,6 +49,8 @@ export function useDashboardData() {
   return useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboard,
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Play, RefreshCw, GripVertical, Building2 } from 'lucide-react';
+import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { useWorkoutSessionStore } from '@/stores/workoutSessionStore';
 import { workoutsApi } from '@/api/workouts';
@@ -13,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export function ReviewWorkoutScreen() {
   const navigate = useNavigate();
+  const isNativeApp = useIsNativeApp();
   const draft = useWorkoutDraftStore((s) => s.draft);
   const setDraft = useWorkoutDraftStore((s) => s.setDraft);
   const updateExerciseInDraft = useWorkoutDraftStore((s) => s.updateExerciseInDraft);
@@ -240,16 +242,31 @@ export function ReviewWorkoutScreen() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <button
-          type="button"
-          onClick={() => navigate(isAI ? '/workout/new/ai' : '/workout/new/manual')}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Review Workout</h1>
-      </div>
+      {!isNativeApp && (
+        <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button
+            type="button"
+            onClick={() => navigate(isAI ? '/workout/new/ai' : '/workout/new/manual')}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Review Workout</h1>
+        </div>
+      )}
+
+      {isNativeApp && (
+        <div className="p-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+          <button
+            type="button"
+            onClick={() => navigate(isAI ? '/workout/new/ai' : '/workout/new/manual')}
+            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+        </div>
+      )}
 
       {gyms.length > 0 && (
         <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center gap-2">

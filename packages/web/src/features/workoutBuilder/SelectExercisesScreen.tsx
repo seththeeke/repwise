@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Plus, Check, List, X, Play } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 import { exercisesApi } from '@/api/exercises';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { WorkoutSource, PermissionType, ExerciseModality } from '@/types';
@@ -26,6 +27,7 @@ const MUSCLE_GROUPS = [
 
 export function SelectExercisesScreen() {
   const navigate = useNavigate();
+  const isNativeApp = useIsNativeApp();
   const draft = useWorkoutDraftStore((s) => s.draft);
   const setDraft = useWorkoutDraftStore((s) => s.setDraft);
   const updateExerciseInDraft = useWorkoutDraftStore((s) => s.updateExerciseInDraft);
@@ -90,16 +92,31 @@ export function SelectExercisesScreen() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <button
-          type="button"
-          onClick={() => navigate('/workout/new')}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Select Exercises</h1>
-      </div>
+      {!isNativeApp && (
+        <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button
+            type="button"
+            onClick={() => navigate('/workout/new')}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Select Exercises</h1>
+        </div>
+      )}
+
+      {isNativeApp && (
+        <div className="p-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/workout/new')}
+            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+        </div>
+      )}
 
       <div className="p-4 space-y-3 border-b border-gray-200 dark:border-gray-700">
         <div className="relative">

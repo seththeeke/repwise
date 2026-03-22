@@ -10,13 +10,17 @@ import { Dumbbell, Loader2, X } from 'lucide-react';
 
 type View = 'signin' | 'signup' | 'signup-confirm' | 'forgot' | 'forgot-confirm';
 
+type LoginDialogVariant = 'modal' | 'fullscreen';
+
 interface LoginDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  /** Fullscreen: app landing (no overlay, no close); Modal: dialog overlay (default) */
+  variant?: LoginDialogVariant;
 }
 
-export default function LoginDialog({ open, onClose, onSuccess }: LoginDialogProps) {
+export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal' }: LoginDialogProps) {
   const [view, setView] = useState<View>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -142,8 +146,9 @@ export default function LoginDialog({ open, onClose, onSuccess }: LoginDialogPro
     }
   };
 
-  if (!open) return null;
+  if (!open && variant === 'modal') return null;
 
+  const isFullscreen = variant === 'fullscreen';
   const title =
     view === 'signin'
       ? 'Log in'
@@ -155,40 +160,22 @@ export default function LoginDialog({ open, onClose, onSuccess }: LoginDialogPro
             ? 'Forgot password'
             : 'Reset password';
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-      onClick={handleClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="login-dialog-title"
-    >
-      <div
-        className="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative flex flex-col items-center pt-6 pb-4 px-6 bg-gradient-to-b from-violet-50 to-white dark:from-gray-800 dark:to-gray-800">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={loading}
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <div className="w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <Dumbbell className="w-8 h-8 text-white" />
-          </div>
-          <h2 id="login-dialog-title" className="text-xl font-bold text-gray-900 dark:text-white">
-            {title}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Track your fitness journey
-          </p>
-        </div>
+  const headerContent = (
+    <>
+      <div className="w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+        <Dumbbell className="w-8 h-8 text-white" />
+      </div>
+      <h2 id="login-dialog-title" className="text-xl font-bold text-gray-900 dark:text-white">
+        {title}
+      </h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        Track your fitness journey
+      </p>
+    </>
+  );
 
-        <div className="p-6 space-y-4">
+  const formContent = (
+    <div className="p-6 space-y-4">
           {successMessage && (
             <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-sm">
               {successMessage}
@@ -489,7 +476,58 @@ export default function LoginDialog({ open, onClose, onSuccess }: LoginDialogPro
               </button>
             </form>
           )}
+    </div>
+  );
+
+  if (isFullscreen) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-primary to-primary-dark"
+        role="dialog"
+        aria-labelledby="login-dialog-title"
+      >
+        <div className="w-full max-w-sm flex flex-col items-center mb-6">
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4">
+            <Dumbbell className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white">Repwise</h1>
+          <p className="text-sm text-white/80 mt-1">Track your fitness journey</p>
         </div>
+        <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="flex flex-col items-center pt-6 pb-2 px-6 bg-gradient-to-b from-violet-50 to-white dark:from-gray-800 dark:to-gray-800">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+          </div>
+          {formContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="login-dialog-title"
+    >
+      <div
+        className="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative flex flex-col items-center pt-6 pb-4 px-6 bg-gradient-to-b from-violet-50 to-white dark:from-gray-800 dark:to-gray-800">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {headerContent}
+        </div>
+        {formContent}
       </div>
     </div>
   );

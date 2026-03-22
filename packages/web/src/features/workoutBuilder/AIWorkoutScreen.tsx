@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Wand2, Sparkles, Check } from 'lucide-react';
+import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 import {
   streamWorkoutGeneration,
   AI_PROGRESS_STEPS,
@@ -21,6 +22,7 @@ type LocationGym = { gymId: string; name: string; equipmentTypes: string[] };
 export function AIWorkoutScreen() {
   const navigate = useNavigate();
   const location = useLocation();
+  const isNativeApp = useIsNativeApp();
   const setDraft = useWorkoutDraftStore((s) => s.setDraft);
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -100,20 +102,22 @@ export function AIWorkoutScreen() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <button
-          type="button"
-          onClick={() => navigate('/workout/new')}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-          AI Workout
-        </h1>
-      </div>
+      {!isNativeApp && (
+        <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button
+            type="button"
+            onClick={() => navigate('/workout/new')}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            AI Workout
+          </h1>
+        </div>
+      )}
 
-      <div className="flex-1 flex flex-col p-4">
+      <div className={`flex-1 flex flex-col p-4 ${isNativeApp ? '' : ''}`}>
         {loading && progressStep ? (
           <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
             <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30 animate-pulse">
@@ -167,7 +171,18 @@ export function AIWorkoutScreen() {
             </ul>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
+          <div className={`flex flex-col items-center max-w-md mx-auto w-full ${isNativeApp ? 'flex-1 justify-center' : 'flex-1 justify-center'}`}>
+            {isNativeApp && (
+              <button
+                type="button"
+                onClick={() => navigate('/workout/new')}
+                className="self-start p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors mb-4"
+                style={{ marginTop: 'env(safe-area-inset-top)' }}
+                aria-label="Back"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
+            )}
             <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30">
               <Sparkles className="w-10 h-10 text-white" />
             </div>
@@ -186,25 +201,25 @@ export function AIWorkoutScreen() {
               disabled={loading}
             />
 
-            <div className="mt-4">
+            <div className="mt-4 w-full">
               <QuickPromptChips onSelect={(text) => setPrompt((p) => (p ? `${p} ${text}` : text))} />
             </div>
 
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={!prompt.trim() || loading}
+              className="w-full mt-6 py-4 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2"
+            >
+              <Wand2 className="w-5 h-5" />
+              {loading ? 'Generating...' : 'Generate Workout'}
+            </button>
+
             {error && (
-              <p className="mt-3 text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+              <p className="mt-3 text-sm text-red-600 dark:text-red-400 text-center w-full">{error}</p>
             )}
           </div>
         )}
-
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={!prompt.trim() || loading}
-          className="w-full py-4 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2"
-        >
-          <Wand2 className="w-5 h-5" />
-          {loading ? 'Generating...' : 'Generate Workout'}
-        </button>
       </div>
     </div>
   );

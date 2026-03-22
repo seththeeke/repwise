@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Settings2, Sparkles } from 'lucide-react';
+import { Settings2, Sparkles, ArrowLeft } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import { builderAiConfigApi } from '@/api/builderAiConfig';
 
@@ -52,6 +52,14 @@ export function AdminHomePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="bg-gradient-to-b from-primary to-primary-dark px-4 pt-12 pb-6">
         <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
           <h1 className="text-lg font-semibold text-white flex items-center gap-2">
             <Settings2 className="w-5 h-5" />
             Admin

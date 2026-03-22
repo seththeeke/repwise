@@ -102,6 +102,9 @@ pnpm -r build
   `cd prototype-app && pnpm install && pnpm dev`  
   Uses mock data for UX iteration.
 
+- **Build & run iOS app (Capacitor):**  
+  Repwise can run natively on iPhone via Capacitor. See [specs/capacitor-ios-plan.md](specs/capacitor-ios-plan.md) for full details. Quick flow: ensure `packages/web/.env.production` (or `.env.ios`) has the same `VITE_*` values as production; then `pnpm build:ios` (builds web + syncs to iOS), and `pnpm --filter web cap:open:ios` to open Xcode. Requires macOS and Xcode.
+
 ---
 
 ## Auth (Cognito) — manual steps for integration tests

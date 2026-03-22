@@ -1,4 +1,5 @@
 import { X, Timer, Play, Pause, SkipForward } from 'lucide-react';
+import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -21,8 +22,10 @@ export function ExecutionHeader({
   onCancel,
   onSkip,
 }: ExecutionHeaderProps) {
+  const isNativeApp = useIsNativeApp();
+  const safeTop = isNativeApp ? { paddingTop: 'max(1rem, env(safe-area-inset-top))' } : {};
   return (
-    <div className="flex items-center justify-between p-4">
+    <div className="flex items-center justify-between p-4" style={safeTop}>
       <button
         type="button"
         onClick={onCancel}
