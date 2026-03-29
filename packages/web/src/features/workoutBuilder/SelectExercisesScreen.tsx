@@ -281,7 +281,7 @@ export function SelectExercisesScreen() {
           className="w-full py-4 bg-primary hover:bg-primary-dark disabled:opacity-50 text-white font-semibold rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
         >
           <Play className="w-5 h-5" />
-          Start Workout ({draftExercises.length} exercises)
+          Finalize Workout ({draftExercises.length} exercises)
         </button>
       </div>
     </div>

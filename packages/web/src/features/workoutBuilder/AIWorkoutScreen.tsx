@@ -157,7 +157,7 @@ export function AIWorkoutScreen() {
                     <span
                       className={
                         done
-                          ? 'text-gray-500 dark:text-gray-400 line-through'
+                          ? 'text-gray-500 dark:text-gray-400'
                           : current
                             ? 'text-gray-900 dark:text-white font-medium'
                             : 'text-gray-500 dark:text-gray-400'

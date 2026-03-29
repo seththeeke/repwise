@@ -51,10 +51,11 @@ export function ExecutionHeader({
       <button
         type="button"
         onClick={onSkip}
-        className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
-        aria-label="Skip to next"
+        className="min-h-[44px] min-w-[72px] px-3 flex items-center justify-center gap-1.5 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors text-sm font-semibold"
+        aria-label="Skip to next exercise"
       >
-        <SkipForward className="w-5 h-5" />
+        <SkipForward className="w-4 h-4 flex-shrink-0" />
+        Skip
       </button>
     </div>
   );

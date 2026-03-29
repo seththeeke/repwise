@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Play, RefreshCw, GripVertical, Building2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Play, RefreshCw, GripVertical, Building2, List } from 'lucide-react';
 import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 import { useWorkoutDraftStore } from '@/stores/workoutDraftStore';
 import { useWorkoutSessionStore } from '@/stores/workoutSessionStore';
@@ -130,6 +130,17 @@ export function ReviewWorkoutScreen() {
   const swapOptions = Array.isArray(catalogExercises)
     ? catalogExercises.filter((c) => !exercises.some((e) => e.exerciseId === c.exerciseId))
     : [];
+
+  const handleEditInManualBuilder = () => {
+    if (!draft || exercises.length === 0) return;
+    const reordered = exercises.map((ex, i) => ({ ...ex, orderIndex: i }));
+    setDraft({
+      ...draft,
+      source: WorkoutSource.MANUAL,
+      exercises: reordered,
+    });
+    navigate('/workout/new/manual');
+  };
 
   const handleStartWorkout = async () => {
     setStarting(true);
@@ -335,7 +346,7 @@ export function ReviewWorkoutScreen() {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto p-4 pb-28 space-y-3">
+      <div className="flex-1 overflow-auto p-4 pb-40 space-y-3">
         {exercises.map((exercise, index) => (
           <div
             key={`${exercise.exerciseId}-${index}`}
@@ -384,8 +395,17 @@ export function ReviewWorkoutScreen() {
         ))}
       </div>
 
-      {/* Fixed Start Workout bar - always visible without scrolling */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur supports-[backdrop-filter]:bg-white dark:supports-[backdrop-filter]:bg-gray-800">
+      {/* Fixed actions: manual builder + Start Workout */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur supports-[backdrop-filter]:bg-white dark:supports-[backdrop-filter]:bg-gray-800 space-y-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          onClick={handleEditInManualBuilder}
+          disabled={starting || exercises.length === 0}
+          className="w-full py-3 border-2 border-primary/40 dark:border-primary/50 text-primary font-semibold rounded-xl hover:bg-primary/5 dark:hover:bg-primary/10 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+        >
+          <List className="w-5 h-5" />
+          Edit in manual builder
+        </button>
         <button
           type="button"
           onClick={handleStartWorkout}

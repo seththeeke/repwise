@@ -1,6 +1,11 @@
-import { Dumbbell } from 'lucide-react';
-
-const QUICK_ADD = [5, 10, 25, 45];
+/** Single row: −5, +5, +10, +25, +45 */
+const QUICK_ADJUST: { label: string; delta: number }[] = [
+  { label: '−5', delta: -5 },
+  { label: '+5', delta: 5 },
+  { label: '+10', delta: 10 },
+  { label: '+25', delta: 25 },
+  { label: '+45', delta: 45 },
+];
 
 interface WeightEntryCardProps {
   weight: string;
@@ -52,15 +57,17 @@ export function WeightEntryCard({
         />
       </div>
 
-      <div className="flex gap-2 mt-4">
-        {QUICK_ADD.map((w) => (
+      <div className="grid grid-cols-5 gap-1.5 mt-4">
+        {QUICK_ADJUST.map(({ label, delta }) => (
           <button
-            key={w}
+            key={label}
             type="button"
-            onClick={() => onWeightChange((current + w).toString())}
-            className="flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-medium text-white transition-colors"
+            onClick={() =>
+              onWeightChange(Math.max(0, current + delta).toString())
+            }
+            className="py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors"
           >
-            +{w}
+            {label}
           </button>
         ))}
       </div>
