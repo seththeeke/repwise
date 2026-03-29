@@ -7,8 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1E0001B26FED79650016801 /* WorkoutActivityKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1E0001926FED79650016801 /* WorkoutActivityKit */; };
+		A1E0000626FED79650016801 /* WorkoutLiveActivityBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E0000226FED79650016801 /* WorkoutLiveActivityBundle.swift */; };
+		A1E0000726FED79650016801 /* WorkoutLiveActivityLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E0000326FED79650016801 /* WorkoutLiveActivityLiveActivity.swift */; };
+		A1E0001026FED79650016801 /* TickerMarquee.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E0000826FED79650016801 /* TickerMarquee.swift */; };
+		A1E0001326FED79650016801 /* LiveSessionTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E0001126FED79650016801 /* LiveSessionTimer.swift */; };
+		A1E0000D26FED79650016801 /* WorkoutLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A1E0000126FED79650016801 /* WorkoutLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
+		A1E0001C26FED79650016801 /* WorkoutActivityKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1E0001926FED79650016801 /* WorkoutActivityKit */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
@@ -18,6 +25,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A1E0000126FED79650016801 /* WorkoutLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WorkoutLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1E0000226FED79650016801 /* WorkoutLiveActivityBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLiveActivityBundle.swift; sourceTree = "<group>"; };
+		A1E0000326FED79650016801 /* WorkoutLiveActivityLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLiveActivityLiveActivity.swift; sourceTree = "<group>"; };
+		A1E0000826FED79650016801 /* TickerMarquee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TickerMarquee.swift; sourceTree = "<group>"; };
+		A1E0001126FED79650016801 /* LiveSessionTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveSessionTimer.swift; sourceTree = "<group>"; };
+		A1E0000426FED79650016801 /* Info-WorkoutLiveActivity.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -31,6 +44,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		A1E0000926FED79650016801 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1E0001B26FED79650016801 /* WorkoutActivityKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -47,14 +68,28 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				A1E0000526FED79650016801 /* WorkoutLiveActivityExtension */,
 				504EC3051FED79650016851F /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		A1E0000526FED79650016801 /* WorkoutLiveActivityExtension */ = {
+			isa = PBXGroup;
+			children = (
+				A1E0000226FED79650016801 /* WorkoutLiveActivityBundle.swift */,
+				A1E0000326FED79650016801 /* WorkoutLiveActivityLiveActivity.swift */,
+				A1E0000826FED79650016801 /* TickerMarquee.swift */,
+				A1E0001126FED79650016801 /* LiveSessionTimer.swift */,
+				A1E0000426FED79650016801 /* Info-WorkoutLiveActivity.plist */,
+			);
+			path = WorkoutLiveActivityExtension;
 			sourceTree = "<group>";
 		};
 		504EC3051FED79650016851F /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				A1E0000126FED79650016801 /* WorkoutLiveActivityExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -77,6 +112,26 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		A1E0000B26FED79650016801 /* WorkoutLiveActivityExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1E0001526FED79650016801 /* Build configuration list for PBXNativeTarget "WorkoutLiveActivityExtension" */;
+			buildPhases = (
+				A1E0001A26FED79650016801 /* Sources */,
+				A1E0000926FED79650016801 /* Frameworks */,
+				A1E0001D26FED79650016801 /* Strip extended attributes before code signing */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WorkoutLiveActivityExtension;
+			packageProductDependencies = (
+				A1E0001926FED79650016801 /* WorkoutActivityKit */,
+			);
+			productName = WorkoutLiveActivityExtension;
+			productReference = A1E0000126FED79650016801 /* WorkoutLiveActivityExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		504EC3031FED79650016851F /* App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
@@ -84,21 +139,56 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				A1E0000C26FED79650016801 /* Embed Foundation Extensions */,
 				A1B2C3D41FED79650016851F /* Strip extended attributes before code signing */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A1E0000E26FED79650016801 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
+				A1E0001926FED79650016801 /* WorkoutActivityKit */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXContainerItemProxy section */
+		A1E0000F26FED79650016801 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1E0000B26FED79650016801;
+			remoteInfo = WorkoutLiveActivityExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A1E0000C26FED79650016801 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A1E0000D26FED79650016801 /* WorkoutLiveActivityExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1E0000E26FED79650016801 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1E0000B26FED79650016801 /* WorkoutLiveActivityExtension */;
+			targetProxy = A1E0000F26FED79650016801 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		504EC2FC1FED79650016851F /* Project object */ = {
@@ -110,6 +200,10 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						ProvisioningStyle = Automatic;
+					};
+					A1E0000B26FED79650016801 = {
+						CreatedOnToolsVersion = 15.0;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -125,12 +219,14 @@
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
+				A1E0001826FED79650016801 /* XCLocalSwiftPackageReference "CapacitorWorkoutLiveActivity" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				A1E0000B26FED79650016801 /* WorkoutLiveActivityExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -152,6 +248,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A1E0001D26FED79650016801 /* Strip extended attributes before code signing */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			alwaysOutOfDate = 1;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Strip extended attributes before code signing";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/usr/bin/xattr -cr \"${SRCROOT}/WorkoutLiveActivityExtension\" 2>/dev/null || true\n/usr/bin/xattr -cr \"${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}\" 2>/dev/null || true\n/usr/bin/xattr -cr \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" 2>/dev/null || true\n";
+		};
 		A1B2C3D41FED79650016851F /* Strip extended attributes before code signing */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -169,6 +280,17 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A1E0001A26FED79650016801 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1E0000626FED79650016801 /* WorkoutLiveActivityBundle.swift in Sources */,
+				A1E0000726FED79650016801 /* WorkoutLiveActivityLiveActivity.swift in Sources */,
+				A1E0001026FED79650016801 /* TickerMarquee.swift in Sources */,
+				A1E0001326FED79650016801 /* LiveSessionTimer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -248,7 +370,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -299,7 +421,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -317,7 +439,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2C568CVX27;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -340,7 +462,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2C568CVX27;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -349,6 +471,54 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.repwise.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A1E0001626FED79650016801 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2C568CVX27;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WorkoutLiveActivityExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.repwise.app.WorkoutLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1E0001726FED79650016801 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2C568CVX27;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WorkoutLiveActivityExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.repwise.app.WorkoutLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -375,12 +545,25 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A1E0001526FED79650016801 /* Build configuration list for PBXNativeTarget "WorkoutLiveActivityExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1E0001626FED79650016801 /* Debug */,
+				A1E0001726FED79650016801 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
 		D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "CapApp-SPM";
+		};
+		A1E0001826FED79650016801 /* XCLocalSwiftPackageReference "CapacitorWorkoutLiveActivity" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = CapacitorWorkoutLiveActivity;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -389,6 +572,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
+		};
+		A1E0001926FED79650016801 /* WorkoutActivityKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1E0001826FED79650016801 /* XCLocalSwiftPackageReference "CapacitorWorkoutLiveActivity" */;
+			productName = WorkoutActivityKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

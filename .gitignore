@@ -58,6 +58,11 @@ coverage/
 # Vite / frontend
 packages/web/dist/
 
+# Local Swift PM (capacitor-workout-live-activity) — never commit build artifacts
+packages/capacitor-workout-live-activity/.build/
+packages/capacitor-workout-live-activity/.swiftpm/xcuserdata/
+packages/capacitor-workout-live-activity/.swiftpm/xcode/xcuserdata/
+
 # Deployment outputs
 cdk-outputs.json
 deploy-outputs.json

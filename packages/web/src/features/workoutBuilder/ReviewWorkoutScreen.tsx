@@ -151,7 +151,9 @@ export function ReviewWorkoutScreen() {
         permissionType: draft.permissionType ?? PermissionType.FOLLOWERS_ONLY,
         ...(draft.selectedGym && { gymId: draft.selectedGym.gymId, gymName: draft.selectedGym.name }),
       });
-      startSession(created.workoutInstanceId, created.exercises);
+      startSession(created.workoutInstanceId, created.exercises, {
+        workoutName: draft.selectedGym?.name ?? 'Workout',
+      });
       clearDraft();
       navigate(`/workout/execute/${created.workoutInstanceId}`);
     } catch {

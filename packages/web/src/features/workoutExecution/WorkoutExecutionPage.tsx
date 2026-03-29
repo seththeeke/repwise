@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check, Dumbbell, History } from 'lucide-react';
-import { useWorkoutSessionStore } from '@/stores/workoutSessionStore';
+import {
+  computeDurationElapsedSeconds,
+  useWorkoutSessionStore,
+} from '@/stores/workoutSessionStore';
+import { useWorkoutExecutionSync } from './useWorkoutExecutionSync';
+import { useWorkoutLiveActivity } from './useWorkoutLiveActivity';
 import { workoutsApi } from '@/api/workouts';
 import { ExecutionHeader } from './ExecutionHeader';
 import { WeightEntryCard } from './WeightEntryCard';
@@ -41,17 +46,21 @@ export function WorkoutExecutionPage() {
   const resumeSession = useWorkoutSessionStore((s) => s.resumeSession);
   const clearSession = useWorkoutSessionStore((s) => s.clearSession);
   const startSession = useWorkoutSessionStore((s) => s.startSession);
+  const startDurationSegment = useWorkoutSessionStore((s) => s.startDurationSegment);
+  const pauseDurationSegment = useWorkoutSessionStore((s) => s.pauseDurationSegment);
+  const durationRunning = useWorkoutSessionStore((s) => s.durationRunning);
+  const durationElapsed = useWorkoutSessionStore((s) => computeDurationElapsedSeconds(s));
+
+  const workoutId = id ?? activeWorkoutId;
 
   const [weightInput, setWeightInput] = useState('');
-  const [durationElapsed, setDurationElapsed] = useState(0);
-  const [durationRunning, setDurationRunning] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const elapsedIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const patchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const workoutId = id ?? activeWorkoutId;
+  useWorkoutExecutionSync();
+  useWorkoutLiveActivity(workoutId ?? undefined, startedAt);
   const currentExercise = exercises[currentExerciseIndex];
   const totalExercises = exercises.length;
   const isLast = currentExerciseIndex === totalExercises - 1;
@@ -64,7 +73,9 @@ export function WorkoutExecutionPage() {
       workoutsApi
         .getById(workoutId)
         .then((wi) => {
-          startSession(wi.workoutInstanceId, wi.exercises);
+          startSession(wi.workoutInstanceId, wi.exercises, {
+            workoutName: wi.notes?.trim() || wi.gymName || 'Workout',
+          });
         })
         .catch(() => {
           navigate('/dashboard');
@@ -84,18 +95,6 @@ export function WorkoutExecutionPage() {
     };
   }, [isPaused, startedAt, tickElapsed]);
 
-  // Duration exercise timer
-  useEffect(() => {
-    if (durationRunning) {
-      durationIntervalRef.current = setInterval(() => {
-        setDurationElapsed((s) => s + 1);
-      }, 1000);
-    }
-    return () => {
-      if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
-    };
-  }, [durationRunning]);
-
   // Sync weight input when changing exercise (prefer current weight, then last used)
   useEffect(() => {
     if (currentExercise) {
@@ -104,8 +103,6 @@ export function WorkoutExecutionPage() {
           ? currentExercise.weight.toString()
           : (currentExercise.lastUsedWeight?.toString() ?? '');
       setWeightInput(value);
-      setDurationElapsed(0);
-      setDurationRunning(false);
     }
   }, [currentExerciseIndex, currentExercise?.exerciseId]);
 
@@ -269,7 +266,9 @@ export function WorkoutExecutionPage() {
               durationSeconds={currentExercise.durationSeconds ?? 60}
               elapsedSeconds={durationElapsed}
               isRunning={durationRunning}
-              onStartPause={() => setDurationRunning((r) => !r)}
+              onStartPause={() =>
+                durationRunning ? pauseDurationSegment() : startDurationSegment()
+              }
               onComplete={handleDurationComplete}
             />
           ) : (

@@ -12,6 +12,15 @@ importers:
         specifier: ~5.6.0
         version: 5.6.3
 
+  packages/capacitor-workout-live-activity:
+    devDependencies:
+      '@capacitor/core':
+        specifier: ^8.2.0
+        version: 8.2.0
+      typescript:
+        specifier: ~5.6.0
+        version: 5.6.3
+
   packages/cdk:
     dependencies:
       aws-cdk-lib:
@@ -337,6 +346,9 @@ importers:
       '@aws-amplify/ui-react':
         specifier: ^6.0.0
         version: 6.15.2(@aws-amplify/core@6.16.1)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(aws-amplify@6.16.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(xstate@4.38.3)
+      '@capacitor/app':
+        specifier: ^8.0.0
+        version: 8.1.0(@capacitor/core@8.2.0)
       '@capacitor/cli':
         specifier: ^8.2.0
         version: 8.2.0
@@ -361,6 +373,9 @@ importers:
       axios:
         specifier: ^1.7.0
         version: 1.13.6
+      capacitor-workout-live-activity:
+        specifier: workspace:*
+        version: link:../capacitor-workout-live-activity
       framer-motion:
         specifier: ^11.0.0
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -781,6 +796,11 @@ packages:
   '@babel/types@7.29.0':
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
+
+  '@capacitor/app@8.1.0':
+    resolution: {integrity: sha512-MlmttTOWHDedr/G4SrhNRxsXMqY+R75S4MM4eIgzsgCzOYhb/MpCkA5Q3nuOCfL1oHm26xjUzqZ5aupbOwdfYg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/cli@8.2.0':
     resolution: {integrity: sha512-1cMEk0d/I6tl1U+v/lnJR5Oylpx8ZBIHrvQxD5zK0MkjYOUyQAAGJgh97rkhGJqjAUvrGpa8H4BmyhNQN9a17A==}
@@ -4544,6 +4564,10 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@capacitor/app@8.1.0(@capacitor/core@8.2.0)':
+    dependencies:
+      '@capacitor/core': 8.2.0
 
   '@capacitor/cli@8.2.0':
     dependencies:
