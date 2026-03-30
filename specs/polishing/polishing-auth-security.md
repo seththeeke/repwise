@@ -66,19 +66,6 @@ Harden authentication and security so Repwise feels trustworthy and meets App St
   - [ ] On 401: clear user state, show login prompt (modal or redirect) with "Session expired — sign in again"
   - [ ] Avoid blank screen or raw error; preserve current route for post-login return
 
-### Phase 3: Social & Polish
-
-- [ ] **Google Sign-In**
-  - [ ] Add Google provider to Cognito
-  - [ ] Capacitor: `@codetrix-studio/capacitor-google-auth`
-  - [ ] UI: Add "Sign in with Google" to `LoginDialog`
-- [ ] **Forgot password polish**
-  - [ ] Ensure Cognito email link lands on a reset page (or Hosted UI) with clear UX
-  - [ ] Verify reset link expires after use; show success and redirect to signin
-- [ ] **Email verification UX**
-  - [ ] If users see "verify your email" friction: improve messaging or post-signup flow
-  - [ ] Cognito already auto-verifies; document for support
-
 ---
 
 ## Files to Modify
