@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Edit2 } from 'lucide-react';
+import { LogOut, Edit2, Settings } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 import type { UserProfile } from '@/types';
@@ -25,14 +25,24 @@ export function ProfileHeader({ profile, onEditClick, onLogout }: ProfileHeaderP
           <span className="text-white text-lg leading-none">←</span>
         </button>
         <h1 className="text-lg font-semibold text-white">Profile</h1>
-        <button
-          type="button"
-          onClick={onLogout}
-          className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-          aria-label="Log out"
-        >
-          <LogOut className="w-5 h-5 text-white" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Settings"
+          >
+            <Settings className="w-5 h-5 text-white" />
+          </button>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Log out"
+          >
+            <LogOut className="w-5 h-5 text-white" />
+          </button>
+        </div>
       </div>
     </div>
   );

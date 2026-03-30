@@ -4,6 +4,9 @@ import type { UserProfile } from '@/types';
 export const usersApi = {
   getMe: () => apiClient.get<UserProfile>('/users/me').then((r) => r.data),
 
+  /** Permanently deletes the signed-in user (Cognito + app data). Returns after `204 No Content`. */
+  deleteMe: () => apiClient.delete<void>('/users/me').then(() => undefined),
+
   patchMe: (
     updates: Partial<
       Pick<

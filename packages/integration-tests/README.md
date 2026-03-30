@@ -22,3 +22,5 @@ pnpm --filter @repwise/integration-tests test 03-workouts
 ```
 
 Tests run **sequentially** so that metrics tests run after workout tests (shared test user data).
+
+**Account deletion** (`09-account-deletion.test.ts`) runs only when `TEST_DELETE_USER_EMAIL` and `TEST_DELETE_USER_PASSWORD` are set in `.env.test`. Use a **separate** Cognito user created only for this test — not the primary `TEST_USER_EMAIL` account used by the rest of the suite.

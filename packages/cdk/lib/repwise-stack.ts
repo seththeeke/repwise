@@ -62,6 +62,30 @@ export class RepwiseStack extends cdk.Stack {
     });
     tables.usersTable.grantReadWriteData(userLambda);
 
+    const cleanupUserDataLambda = new NodejsFunction(this, 'CleanupUserDataLambda', {
+      entry: path.join(__dirname, '../../lambdas/cleanup-user-data/src/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      timeout: cdk.Duration.seconds(120),
+      environment: {
+        USERS_TABLE: tables.usersTable.tableName,
+        WORKOUTS_TABLE: tables.workoutsTable.tableName,
+        METRICS_TABLE: tables.metricsTable.tableName,
+        BUILDER_SESSIONS_TABLE: tables.builderSessionsTable.tableName,
+        USER_POOL_ID: auth.userPool.userPoolId,
+      },
+    });
+    tables.usersTable.grantReadWriteData(cleanupUserDataLambda);
+    tables.workoutsTable.grantReadWriteData(cleanupUserDataLambda);
+    tables.metricsTable.grantReadWriteData(cleanupUserDataLambda);
+    tables.builderSessionsTable.grantReadWriteData(cleanupUserDataLambda);
+    cleanupUserDataLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['cognito-idp:AdminDeleteUser'],
+        resources: [auth.userPool.userPoolArn],
+      })
+    );
+
     const gymsLambda = new NodejsFunction(this, 'GymsLambda', {
       entry: path.join(__dirname, '../../lambdas/gyms/src/index.ts'),
       handler: 'handler',
@@ -230,6 +254,7 @@ export class RepwiseStack extends cdk.Stack {
     });
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me', userLambda, true);
     api.addRoute(apigwv2.HttpMethod.PATCH, '/users/me', userLambda, true);
+    api.addRoute(apigwv2.HttpMethod.DELETE, '/users/me', cleanupUserDataLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me/gyms', gymsLambda, true);
     api.addRoute(apigwv2.HttpMethod.POST, '/users/me/gyms', gymsLambda, true);
     api.addRoute(apigwv2.HttpMethod.PATCH, '/users/me/gyms/{gymId}', gymsLambda, true);

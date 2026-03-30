@@ -17,7 +17,7 @@ Harden authentication and security so Repwise feels trustworthy and meets App St
 | **Forgot password** | Implemented: `resetPassword` → `confirmResetPassword` → back to signin |
 | **Email verification** | Cognito `autoVerify: { email: true }` in [packages/cdk/lib/auth.ts](../../packages/cdk/lib/auth.ts) |
 | **Session** | `getCurrentUser()` at app load; token in `apiClient` interceptor via `fetchAuthSession()` |
-| **Account deletion** | Not implemented — required for App Store |
+| **Account deletion** | `DELETE /users/me` — Cognito `AdminDeleteUser` + DynamoDB cleanup; Settings → Delete account |
 | **Face ID / Touch ID** | Not implemented |
 | **Sign in with Apple** | Not implemented — required if any third-party login exists |
 | **Google Sign-In** | Not implemented |
@@ -39,11 +39,11 @@ Harden authentication and security so Repwise feels trustworthy and meets App St
 
 ### Phase 1: App Store Compliance
 
-- [ ] **Account deletion**
-  - [ ] Add API endpoint `DELETE /users/me` (or similar) to delete user + related data
-  - [ ] Backend: Cognito `adminDeleteUser`, DynamoDB batch delete for user's records
-  - [ ] Frontend: Settings or Profile → "Delete account" with confirmation modal
-  - [ ] Ensure data export or final notice before deletion (per policy)
+- [x] **Account deletion**
+  - [x] Add API endpoint `DELETE /users/me` (or similar) to delete user + related data
+  - [x] Backend: Cognito `adminDeleteUser`, DynamoDB batch delete for user's records
+  - [x] Frontend: Settings or Profile → "Delete account" with confirmation modal
+  - [x] Ensure data export or final notice before deletion (per policy) — in-modal copy; data export not implemented
 - [ ] **Sign in with Apple**
   - [ ] Add Apple provider to Cognito User Pool (AWS Console or CDK)
   - [ ] Capacitor: Use `@capacitor-community/apple-sign-in` or similar
@@ -76,5 +76,5 @@ Harden authentication and security so Repwise feels trustworthy and meets App St
 | Login UI | `packages/web/src/components/LoginDialog.tsx` |
 | Settings / profile | `packages/web/src/features/profile/SettingsPage.tsx`, `ProfilePage.tsx` |
 | API / auth | `packages/web/src/api/client.ts`, `packages/web/src/App.tsx` |
-| User deletion | New Lambda or API route; `packages/api` (or equivalent) |
+| User deletion | `CleanupUserDataLambda` (`packages/lambdas/cleanup-user-data`); `DELETE /users/me` in API stack |
 | Biometric | Capacitor plugin; `packages/web/src/` (auth flow on native) |

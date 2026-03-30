@@ -42,3 +42,10 @@ export const getTestToken = () =>
   getToken(process.env.TEST_USER_EMAIL!, process.env.TEST_USER_PASSWORD!);
 export const getTestToken2 = () =>
   getToken(process.env.TEST_USER_2_EMAIL!, process.env.TEST_USER_2_PASSWORD!);
+
+/** Token for destructive account-deletion tests only — must not be the primary `TEST_USER_*` account. */
+export const getDeleteTestToken = () =>
+  getToken(
+    process.env.TEST_DELETE_USER_EMAIL!,
+    process.env.TEST_DELETE_USER_PASSWORD!
+  );
