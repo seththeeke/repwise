@@ -1,10 +1,12 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
 import { ApiConstruct } from './api';
 import { AuthConstruct } from './auth';
@@ -15,9 +17,26 @@ import { WebsiteConstruct } from './website';
  * Repwise stack. Tables, auth, API, and Lambdas per specs/backend-spec.md.
  * Integration test users are created manually in the User Pool (see README).
  */
+const ROOT_DOMAIN = 'repwisefit.com';
+
 export class RepwiseStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    const hostedZone = route53.HostedZone.fromLookup(this, 'RepwiseHostedZone', {
+      domainName: ROOT_DOMAIN,
+    });
+
+    const certificate = new acm.Certificate(this, 'RepwiseCertificate', {
+      domainName: ROOT_DOMAIN,
+      subjectAlternativeNames: [`*.${ROOT_DOMAIN}`],
+      validation: acm.CertificateValidation.fromDns(hostedZone),
+    });
+
+    // CORS: API Gateway HTTP API and Lambda Function URLs reject custom schemes (e.g. capacitor://localhost).
+    // Capacitor iOS/Android use those origins, so an https-only list breaks native apps. Wildcard is required;
+    // callers are still authenticated via Cognito JWT (not cookies).
+    const corsAllowOrigins = ['*'];
 
     const tables = new TablesConstruct(this, 'Tables');
 
@@ -177,7 +196,7 @@ export class RepwiseStack extends cdk.Stack {
       authType: lambda.FunctionUrlAuthType.NONE,
       invokeMode: lambda.InvokeMode.RESPONSE_STREAM,
       cors: {
-        allowedOrigins: ['*'],
+        allowedOrigins: corsAllowOrigins,
         allowedHeaders: ['Authorization', 'Content-Type'],
         allowedMethods: [lambda.HttpMethod.POST],
       },
@@ -199,7 +218,16 @@ export class RepwiseStack extends cdk.Stack {
     );
     tables.builderAiConfigTable.grantReadWriteData(builderAiConfigLambda);
 
-    const api = new ApiConstruct(this, 'Api', auth.userPool, auth.userPoolClient);
+    const api = new ApiConstruct(this, 'Api', {
+      userPool: auth.userPool,
+      userPoolClient: auth.userPoolClient,
+      corsAllowOrigins,
+      customApiDomain: {
+        domainName: `api.${ROOT_DOMAIN}`,
+        certificate,
+        hostedZone,
+      },
+    });
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me', userLambda, true);
     api.addRoute(apigwv2.HttpMethod.PATCH, '/users/me', userLambda, true);
     api.addRoute(apigwv2.HttpMethod.GET, '/users/me/gyms', gymsLambda, true);
@@ -251,8 +279,8 @@ export class RepwiseStack extends cdk.Stack {
       exportName: 'RepwiseUserPoolClientId',
     });
     new cdk.CfnOutput(this, 'ApiUrl', {
-      value: api.api.apiEndpoint ?? '',
-      description: 'API Gateway URL for integration tests (.env.test API_BASE_URL) and frontend',
+      value: api.publicBaseUrl,
+      description: 'HTTPS API base URL (custom domain) for integration tests and frontend',
       exportName: 'RepwiseApiUrl',
     });
     new cdk.CfnOutput(this, 'AiWorkoutStreamUrl', {
@@ -261,10 +289,14 @@ export class RepwiseStack extends cdk.Stack {
       exportName: 'RepwiseAiWorkoutStreamUrl',
     });
 
-    const website = new WebsiteConstruct(this, 'Website');
+    const website = new WebsiteConstruct(this, 'Website', {
+      hostedZone,
+      certificate,
+      apexDomainName: ROOT_DOMAIN,
+    });
     new cdk.CfnOutput(this, 'WebsiteUrl', {
       value: website.url,
-      description: 'Frontend app URL (CloudFront). Set VITE_API_BASE_URL, VITE_COGNITO_*, VITE_AI_WORKOUT_STREAM_URL in .env.production before building web.',
+      description: `Frontend at https://${ROOT_DOMAIN}. Set VITE_* in packages/web/.env.production before build.`,
       exportName: 'RepwiseWebsiteUrl',
     });
     new cdk.CfnOutput(this, 'CloudFrontDistributionId', {

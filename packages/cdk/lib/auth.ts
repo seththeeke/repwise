@@ -2,6 +2,11 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
+/**
+ * Cognito user pool + client. Custom domain (e.g. auth.repwisefit.com) is not created here — CloudFormation
+ * repeatedly returned InvalidRequest for AWS::Cognito::UserPoolDomain; add the domain in the Cognito console
+ * after deploy (see packages/cdk/README.md).
+ */
 export class AuthConstruct extends Construct {
   public readonly userPool: cognito.UserPool;
   public readonly userPoolClient: cognito.UserPoolClient;
@@ -32,7 +37,6 @@ export class AuthConstruct extends Construct {
       generateSecret: false,
     });
 
-    // Admin group for editing AI workout builder prompt templates/model at runtime.
     new cognito.CfnUserPoolGroup(this, 'BuilderAdminGroup', {
       userPoolId: this.userPool.userPoolId,
       groupName: 'builder-admin',
