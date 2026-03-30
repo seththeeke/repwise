@@ -49,5 +49,18 @@
 	<true/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Repwise uses Face ID to unlock saved passwords from your Keychain and to unlock the app after you sign in.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.repwisefit.app.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.repwisefit.app</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

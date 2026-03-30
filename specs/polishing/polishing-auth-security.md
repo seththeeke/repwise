@@ -18,8 +18,8 @@ Harden authentication and security so Repwise feels trustworthy and meets App St
 | **Email verification** | Cognito `autoVerify: { email: true }` in [packages/cdk/lib/auth.ts](../../packages/cdk/lib/auth.ts) |
 | **Session** | `getCurrentUser()` at app load; token in `apiClient` interceptor via `fetchAuthSession()` |
 | **Account deletion** | `DELETE /users/me` — Cognito `AdminDeleteUser` + DynamoDB cleanup; Settings → Delete account |
-| **Face ID / Touch ID** | Not implemented |
-| **Sign in with Apple** | Not implemented — required if any third-party login exists |
+| **Face ID / Touch ID** | Native: Settings toggle + `BiometricUnlockGate`; `@aparajita/capacitor-biometric-auth` |
+| **Sign in with Apple** | Cognito managed domain + optional Apple IdP (CDK `APPLE_*`); Amplify `signInWithRedirect`; `VITE_APPLE_SIGNIN_ENABLED` |
 | **Google Sign-In** | Not implemented |
 | **Persistent sessions** | Cognito refresh tokens; behavior may vary; no explicit Keychain/localStorage handling |
 | **Session timeout re-auth** | No global interceptor; expired tokens may surface as API errors |
@@ -44,16 +44,16 @@ Harden authentication and security so Repwise feels trustworthy and meets App St
   - [x] Backend: Cognito `adminDeleteUser`, DynamoDB batch delete for user's records
   - [x] Frontend: Settings or Profile → "Delete account" with confirmation modal
   - [x] Ensure data export or final notice before deletion (per policy) — in-modal copy; data export not implemented
-- [ ] **Sign in with Apple**
-  - [ ] Add Apple provider to Cognito User Pool (AWS Console or CDK)
-  - [ ] Capacitor: Use `@capacitor-community/apple-sign-in` or similar
-  - [ ] UI: Add "Sign in with Apple" button to `LoginDialog`
-  - [ ] Handle identity token and link to Cognito
-- [ ] **Face ID / Touch ID**
-  - [ ] Use LocalAuthentication via Capacitor plugin (e.g. `@aparajita/capacitor-biometric-auth`)
-  - [ ] Store a session flag or credential hint in Keychain (via Secure Storage plugin)
-  - [ ] On app launch (return visit): prompt for Face ID / Touch ID before showing main app
-  - [ ] Fallback to password if biometric fails or is unavailable
+- [x] **Sign in with Apple**
+  - [x] Add Apple provider to Cognito User Pool (CDK when `APPLE_*` env set; or console)
+  - [x] OAuth via Cognito Hosted UI + Amplify `signInWithRedirect` (native uses same flow + `com.repwise.app://callback`)
+  - [x] UI: "Sign in with Apple" on `LoginDialog` when `VITE_APPLE_SIGNIN_ENABLED=true`
+  - [x] Amplify exchanges OAuth code for tokens; post-confirm handles federated `username` / missing email
+- [x] **Face ID / Touch ID**
+  - [x] `@aparajita/capacitor-biometric-auth` + `NSFaceIDUsageDescription`
+  - [x] Opt-in flag in `@capacitor/preferences` (`repwise_biometric_unlock_enabled`)
+  - [x] `BiometricUnlockGate` before main app on native when enabled
+  - [x] "Use password instead" calls sign-out (fallback)
 
 ### Phase 2: Session Persistence & Re-auth
 

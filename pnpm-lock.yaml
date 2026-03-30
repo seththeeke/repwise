@@ -368,6 +368,9 @@ importers:
 
   packages/web:
     dependencies:
+      '@aparajita/capacitor-biometric-auth':
+        specifier: ^10.0.0
+        version: 10.0.0
       '@aws-amplify/ui-react':
         specifier: ^6.0.0
         version: 6.15.2(@aws-amplify/core@6.16.1)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(aws-amplify@6.16.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(xstate@4.38.3)
@@ -384,6 +387,9 @@ importers:
         specifier: ^8.2.0
         version: 8.2.0(@capacitor/core@8.2.0)
       '@capacitor/keyboard':
+        specifier: ^8.0.1
+        version: 8.0.1(@capacitor/core@8.2.0)
+      '@capacitor/preferences':
         specifier: ^8.0.1
         version: 8.0.1(@capacitor/core@8.2.0)
       '@repwise/shared':
@@ -462,6 +468,10 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
+
+  '@aparajita/capacitor-biometric-auth@10.0.0':
+    resolution: {integrity: sha512-azjWaRucB8x1/gSzSTp/NxelaOZyg+m765gSzjwUkSQgg30RrZPmPq6pyLeeXVSZNDY3Rxf5Hj8obgZaXirCFQ==}
+    engines: {node: '>=20.0.0'}
 
   '@aws-amplify/analytics@7.0.93':
     resolution: {integrity: sha512-3WoB0VzATJyupTNQ+ZnzE0pLYnpZPtqNN4deZ8gadG5uzGhhvkt9uZtgVnn/QFGb35DnP8qNDTRiM0rL3vjyZQ==}
@@ -904,6 +914,11 @@ packages:
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
 
+  '@capacitor/android@8.3.0':
+    resolution: {integrity: sha512-EQy6ByUuKayQBJmMm/e0byJiHavqsQHrvW23BuT2GNVQvenAvipqwaePiJHzrv2PZr7A0T0+se4kgDCeROj0mQ==}
+    peerDependencies:
+      '@capacitor/core': ^8.3.0
+
   '@capacitor/app@8.1.0':
     resolution: {integrity: sha512-MlmttTOWHDedr/G4SrhNRxsXMqY+R75S4MM4eIgzsgCzOYhb/MpCkA5Q3nuOCfL1oHm26xjUzqZ5aupbOwdfYg==}
     peerDependencies:
@@ -924,6 +939,11 @@ packages:
 
   '@capacitor/keyboard@8.0.1':
     resolution: {integrity: sha512-HDf4qrvvhLRMsgBoqeqIld6hP8JMK/WPbCYMvz8ajhY6TaibYt6B+NQyky4oIPCOfHTz5OcVsuHkbb8fQvGDAg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/preferences@8.0.1':
+    resolution: {integrity: sha512-T6no3ebi79XJCk91U3Jp/liJUwgBdvHR+s6vhvPkPxSuch7z3zx5Rv1bdWM6sWruNx+pViuEGqZvbfCdyBvcHQ==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -3789,6 +3809,13 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
+  '@aparajita/capacitor-biometric-auth@10.0.0':
+    dependencies:
+      '@capacitor/android': 8.3.0(@capacitor/core@8.2.0)
+      '@capacitor/app': 8.1.0(@capacitor/core@8.2.0)
+      '@capacitor/core': 8.2.0
+      '@capacitor/ios': 8.2.0(@capacitor/core@8.2.0)
+
   '@aws-amplify/analytics@7.0.93(@aws-amplify/core@6.16.1)':
     dependencies:
       '@aws-amplify/core': 6.16.1
@@ -4984,6 +5011,10 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
+  '@capacitor/android@8.3.0(@capacitor/core@8.2.0)':
+    dependencies:
+      '@capacitor/core': 8.2.0
+
   '@capacitor/app@8.1.0(@capacitor/core@8.2.0)':
     dependencies:
       '@capacitor/core': 8.2.0
@@ -5019,6 +5050,10 @@ snapshots:
       '@capacitor/core': 8.2.0
 
   '@capacitor/keyboard@8.0.1(@capacitor/core@8.2.0)':
+    dependencies:
+      '@capacitor/core': 8.2.0
+
+  '@capacitor/preferences@8.0.1(@capacitor/core@8.2.0)':
     dependencies:
       '@capacitor/core': 8.2.0
 

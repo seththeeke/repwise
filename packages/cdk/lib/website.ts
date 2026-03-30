@@ -85,11 +85,28 @@ export class WebsiteConstruct extends Construct {
     }
 
     const webDistPath = path.join(__dirname, '../../web/dist');
+    /** iOS Password AutoFill / app–site association (Capacitor hostname must match apex domain). */
+    const appleTeamId = '2C568CVX27';
+    const sources: s3deploy.ISource[] = [s3deploy.Source.asset(webDistPath)];
+    if (domain) {
+      sources.push(
+        s3deploy.Source.jsonData('.well-known/apple-app-site-association', {
+          applinks: {
+            details: [
+              {
+                appID: `${appleTeamId}.com.repwisefit.app`,
+                paths: ['*'],
+              },
+            ],
+          },
+        })
+      );
+    }
     new s3deploy.BucketDeployment(this, 'DeployWebsite', {
       destinationBucket: bucket,
       distribution,
       distributionPaths: ['/*'],
-      sources: [s3deploy.Source.asset(webDistPath)],
+      sources,
       memoryLimit: 1024,
     });
 

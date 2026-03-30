@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
+import { Hub } from 'aws-amplify/utils';
 import { getCurrentUser, signOut as amplifySignOut } from 'aws-amplify/auth';
 import { isCognitoConfigured } from './lib/amplify';
 import { Navigate } from 'react-router-dom';
@@ -30,6 +31,7 @@ import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { Dumbbell } from 'lucide-react';
 import { AdminHomePage } from './features/admin/AdminHomePage';
 import { BuilderAiConfigPage } from './features/admin/BuilderAiConfigPage';
+import { BiometricUnlockGate } from './components/BiometricUnlockGate';
 
 function NativeLoginRedirect() {
   const navigate = useNavigate();
@@ -102,6 +104,15 @@ function App() {
 
   useEffect(() => {
     loadUser();
+  }, [loadUser]);
+
+  useEffect(() => {
+    const sub = Hub.listen('auth', ({ payload }) => {
+      if (payload.event === 'signedIn' || payload.event === 'signInWithRedirect') {
+        void loadUser();
+      }
+    });
+    return () => sub();
   }, [loadUser]);
 
   useEffect(() => {
@@ -213,6 +224,7 @@ function App() {
 
   return (
     <AppShell>
+      <BiometricUnlockGate onUsePassword={handleLogout}>
       <BrowserRouter>
         <NativeLoginRedirect />
         <ToastContainer />
@@ -254,6 +266,7 @@ function App() {
         <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
       </Routes>
     </BrowserRouter>
+      </BiometricUnlockGate>
     </AppShell>
   );
 }

@@ -5,8 +5,12 @@ import {
   confirmSignUp,
   resetPassword,
   confirmResetPassword,
+  signInWithRedirect,
 } from 'aws-amplify/auth';
-import { Dumbbell, Loader2, X } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Dumbbell, Loader2, Fingerprint, X } from 'lucide-react';
+import { isAppleSignInEnabled } from '@/lib/amplify';
+import { KeychainPassword } from '@/lib/keychainPassword';
 
 type View = 'signin' | 'signup' | 'signup-confirm' | 'forgot' | 'forgot-confirm';
 
@@ -31,6 +35,7 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
   const [successMessage, setSuccessMessage] = useState('');
   const [emailError, setEmailError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [keychainLoading, setKeychainLoading] = useState(false);
 
   const resetForm = () => {
     setView('signin');
@@ -80,6 +85,40 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
     } catch (err) {
       setLoading(false);
       setError(err instanceof Error ? err.message : 'Sign-in failed. Check your email and password.');
+    }
+  };
+
+  const handleKeychainPassword = async () => {
+    setError('');
+    setKeychainLoading(true);
+    try {
+      const { username, password: pw } = await KeychainPassword.requestSharedWebCredential({
+        domain: 'repwisefit.com',
+      });
+      setEmail(username);
+      setPassword(pw);
+      setEmailError('');
+    } catch (err) {
+      const msg =
+        err && typeof err === 'object' && 'message' in err && typeof (err as Error).message === 'string'
+          ? (err as Error).message
+          : 'Could not load saved password.';
+      setError(msg);
+    } finally {
+      setKeychainLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithRedirect({ provider: 'Apple' });
+    } catch (err) {
+      setLoading(false);
+      setError(
+        err instanceof Error ? err.message : 'Sign in with Apple could not start. Try again.'
+      );
     }
   };
 
@@ -218,13 +257,37 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
 
           {view === 'signin' && (
             <form onSubmit={handleSignIn} className="space-y-4">
+              {isAppleSignInEnabled ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleAppleSignIn()}
+                    disabled={loading}
+                    className="w-full py-3 px-4 rounded-xl bg-black text-white font-medium flex items-center justify-center gap-2 hover:bg-gray-900 disabled:opacity-50"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        fill="currentColor"
+                        d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.63 3.38 1.56-3.14 1.88-2.54 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.03-.03zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+                      />
+                    </svg>
+                    Sign in with Apple
+                  </button>
+                  <p className="text-center text-xs text-gray-500 dark:text-gray-400">or use email</p>
+                </>
+              ) : null}
               <div>
                 <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Email
                 </label>
                 <input
                   id="login-email"
+                  name="username"
                   type="email"
+                  inputMode="email"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
                   onBlur={handleEmailBlur}
@@ -233,7 +296,7 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                   }`}
                   placeholder="Enter your email"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                 />
                 {emailError && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
               </div>
@@ -243,6 +306,7 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                 </label>
                 <input
                   id="login-password"
+                  name="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -282,6 +346,21 @@ export default function LoginDialog({ open, onClose, onSuccess, variant = 'modal
                   Forgot password?
                 </button>
               </div>
+              {Capacitor.getPlatform() === 'ios' ? (
+                <button
+                  type="button"
+                  onClick={() => void handleKeychainPassword()}
+                  disabled={loading || keychainLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/80 text-gray-800 dark:text-gray-100 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50"
+                >
+                  {keychainLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin shrink-0" aria-hidden />
+                  ) : (
+                    <Fingerprint className="w-5 h-5 text-primary shrink-0" aria-hidden />
+                  )}
+                  Use FaceID to unlock iCloud Keychain
+                </button>
+              ) : null}
             </form>
           )}
 

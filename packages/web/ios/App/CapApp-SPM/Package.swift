@@ -12,8 +12,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.2.0"),
+        .package(name: "AparajitaCapacitorBiometricAuth", path: "../../../../../node_modules/.pnpm/@aparajita+capacitor-biometric-auth@10.0.0/node_modules/@aparajita/capacitor-biometric-auth"),
         .package(name: "CapacitorApp", path: "../../../../../node_modules/.pnpm/@capacitor+app@8.1.0_@capacitor+core@8.2.0/node_modules/@capacitor/app"),
         .package(name: "CapacitorKeyboard", path: "../../../../../node_modules/.pnpm/@capacitor+keyboard@8.0.1_@capacitor+core@8.2.0/node_modules/@capacitor/keyboard"),
+        .package(name: "CapacitorPreferences", path: "../../../../../node_modules/.pnpm/@capacitor+preferences@8.0.1_@capacitor+core@8.2.0/node_modules/@capacitor/preferences"),
         .package(name: "CapacitorWorkoutLiveActivity", path: "../CapacitorWorkoutLiveActivity")
     ],
     targets: [
@@ -22,8 +24,10 @@ let package = Package(
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
+                .product(name: "AparajitaCapacitorBiometricAuth", package: "AparajitaCapacitorBiometricAuth"),
                 .product(name: "CapacitorApp", package: "CapacitorApp"),
                 .product(name: "CapacitorKeyboard", package: "CapacitorKeyboard"),
+                .product(name: "CapacitorPreferences", package: "CapacitorPreferences"),
                 .product(name: "CapacitorWorkoutLiveActivity", package: "CapacitorWorkoutLiveActivity")
             ]
         )

@@ -16,9 +16,10 @@ export const handler = async (
   console.log('[cognito-post-confirm] invoked', { userName: event.userName });
   const userId = event.userName;
   const email = event.request.userAttributes['email'] ?? '';
+  const rawPreferred = event.request.userAttributes['preferred_username'] as string | undefined;
   const username =
-    (event.request.userAttributes['preferred_username'] as string | undefined) ??
-    email.split('@')[0];
+    rawPreferred?.trim() ||
+    (email ? email.split('@')[0] : `user_${userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20) || 'member'}`);
   const now = new Date().toISOString();
 
   const profile: UserProfile = {

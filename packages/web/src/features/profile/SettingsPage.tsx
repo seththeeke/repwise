@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ChevronLeft, Trash2 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { LogOut, ChevronLeft, Trash2, Fingerprint } from 'lucide-react';
+import { getBiometricUnlockEnabled, setBiometricUnlockEnabled } from '@/lib/biometricPrefs';
+import { isBiometryAvailableForUnlock } from '@/lib/biometricAuth';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToastStore } from '@/stores/toastStore';
@@ -16,6 +19,31 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteAcknowledged, setDeleteAcknowledged] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [bioSectionReady, setBioSectionReady] = useState(false);
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioEnabled, setBioEnabled] = useState(false);
+
+  useEffect(() => {
+    if (Capacitor.getPlatform() === 'web') {
+      setBioSectionReady(true);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const [avail, enabled] = await Promise.all([
+        isBiometryAvailableForUnlock(),
+        getBiometricUnlockEnabled(),
+      ]);
+      if (!cancelled) {
+        setBioAvailable(avail);
+        setBioEnabled(enabled);
+        setBioSectionReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleDeleteAccount = async () => {
     setDeleting(true);
@@ -57,6 +85,30 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             profile.
           </p>
         </div>
+
+        {bioSectionReady && Capacitor.getPlatform() !== 'web' && bioAvailable ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+            <label className="flex items-start gap-3 px-4 py-4 cursor-pointer">
+              <Fingerprint className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" aria-hidden />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 dark:text-white">Face ID / Touch ID</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Ask for biometric unlock when you open the app after signing in.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                className="mt-1 rounded border-gray-300 dark:border-gray-600"
+                checked={bioEnabled}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setBioEnabled(v);
+                  void setBiometricUnlockEnabled(v);
+                }}
+              />
+            </label>
+          </div>
+        ) : null}
 
         <button
           type="button"

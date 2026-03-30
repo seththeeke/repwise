@@ -52,7 +52,23 @@ export class RepwiseStack extends cdk.Stack {
     tables.usersTable.grantWriteData(postConfirmLambda);
     tables.metricsTable.grantWriteData(postConfirmLambda);
 
-    const auth = new AuthConstruct(this, 'Auth', postConfirmLambda);
+    const appleSignIn =
+      process.env.APPLE_SERVICES_ID &&
+      process.env.APPLE_TEAM_ID &&
+      process.env.APPLE_KEY_ID &&
+      process.env.APPLE_PRIVATE_KEY
+        ? {
+            servicesId: process.env.APPLE_SERVICES_ID,
+            teamId: process.env.APPLE_TEAM_ID,
+            keyId: process.env.APPLE_KEY_ID,
+            privateKeyPem: process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          }
+        : undefined;
+
+    const auth = new AuthConstruct(this, 'Auth', {
+      postConfirmLambda,
+      appleSignIn,
+    });
 
     const userLambda = new NodejsFunction(this, 'UserLambda', {
       entry: path.join(__dirname, '../../lambdas/user/src/index.ts'),
@@ -302,6 +318,18 @@ export class RepwiseStack extends cdk.Stack {
       value: auth.userPoolClient.userPoolClientId,
       description: 'Cognito User Pool Client ID for integration tests (.env.test COGNITO_CLIENT_ID)',
       exportName: 'RepwiseUserPoolClientId',
+    });
+    const cognitoOAuthHost = cdk.Fn.join('', [
+      auth.cognitoOAuthDomain.domainName,
+      '.auth.',
+      this.region,
+      '.amazoncognito.com',
+    ]);
+    new cdk.CfnOutput(this, 'CognitoOAuthDomain', {
+      value: cognitoOAuthHost,
+      description:
+        'Cognito hosted UI hostname for Amplify (VITE_COGNITO_OAUTH_DOMAIN, no https://)',
+      exportName: 'RepwiseCognitoOAuthDomain',
     });
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: api.publicBaseUrl,
