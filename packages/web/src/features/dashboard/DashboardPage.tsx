@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 const FAB_GUIDED_KEY = 'workout_fab_guided';
+const PULL_REFRESH_THRESHOLD = 72;
+const MAX_PULL_DISTANCE = 120;
 
 function DashboardSkeleton() {
   return (
@@ -56,11 +59,18 @@ export function DashboardPage({
   profilePhoto,
 }: DashboardPageProps) {
   const navigate = useNavigate();
+  const isIosNative = Capacitor.getPlatform() === 'ios';
   const [showCalendar, setShowCalendar] = useState(false);
   const [showFabCoachMark, setShowFabCoachMark] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
   const simulateLoading = useDevToolsStore((s) => s.simulateLoading);
   const { data, isLoading, error } = useDashboardData();
   const showSkeleton = isLoading || simulateLoading;
+  const pullStartYRef = useRef<number | null>(null);
+  const pullDistanceRef = useRef(0);
+  const reloadingRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -72,6 +82,83 @@ export function DashboardPage({
     }
   }, []);
 
+  useEffect(() => {
+    reloadingRef.current = isReloading;
+  }, [isReloading]);
+
+  useEffect(() => {
+    if (!isIosNative) return;
+
+    const updatePullDistance = (value: number) => {
+      pullDistanceRef.current = value;
+      setPullDistance(value);
+    };
+
+    const resetPull = () => {
+      pullStartYRef.current = null;
+      setIsPulling(false);
+      updatePullDistance(0);
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (window.scrollY > 0 || reloadingRef.current) {
+        pullStartYRef.current = null;
+        return;
+      }
+      const touch = event.touches[0];
+      if (!touch) return;
+      pullStartYRef.current = touch.clientY;
+      setIsPulling(false);
+      updatePullDistance(0);
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const startY = pullStartYRef.current;
+      if (startY === null || reloadingRef.current) return;
+
+      if (window.scrollY > 0) {
+        resetPull();
+        return;
+      }
+
+      const touch = event.touches[0];
+      if (!touch) return;
+
+      const delta = touch.clientY - startY;
+      if (delta <= 0) {
+        setIsPulling(false);
+        updatePullDistance(0);
+        return;
+      }
+
+      // Dampening keeps the indicator movement natural and bounded.
+      const dampenedDistance = Math.min(MAX_PULL_DISTANCE, delta * 0.5);
+      setIsPulling(true);
+      updatePullDistance(dampenedDistance);
+    };
+
+    const handleTouchEnd = () => {
+      const shouldReload =
+        pullDistanceRef.current >= PULL_REFRESH_THRESHOLD && !reloadingRef.current;
+      resetPull();
+      if (!shouldReload) return;
+      setIsReloading(true);
+      window.location.reload();
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [isIosNative]);
+
   const dismissFabCoachMark = () => {
     try {
       localStorage.setItem(FAB_GUIDED_KEY, '1');
@@ -80,6 +167,9 @@ export function DashboardPage({
     }
     setShowFabCoachMark(false);
   };
+
+  const showPullHint = isIosNative && (isPulling || isReloading);
+  const shouldReleaseToRefresh = pullDistance >= PULL_REFRESH_THRESHOLD;
 
   if (showSkeleton) {
     return <DashboardSkeleton />;
@@ -131,6 +221,26 @@ export function DashboardPage({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+      {showPullHint && (
+        <div
+          className="fixed left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+          style={{
+            top: 'max(0.5rem, env(safe-area-inset-top))',
+            opacity: Math.min(1, Math.max(0.25, pullDistance / PULL_REFRESH_THRESHOLD)),
+          }}
+        >
+          <div className="rounded-full bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 px-3 py-1.5 shadow-sm">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
+              {isReloading
+                ? 'Refreshing...'
+                : shouldReleaseToRefresh
+                  ? 'Release to refresh'
+                  : 'Pull to refresh'}
+            </p>
+          </div>
+        </div>
+      )}
+
       {showCalendar && (
         <CalendarViewModal
           completedDates={global?.completedDates ?? []}
